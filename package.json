@@ -1,0 +1,39 @@
+{
+  "name": "artisanmarket",
+  "version": "1.0.0",
+  "description": "Multi-vendor e-commerce platform for artisan products",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "cd client && npm install && cd ../server && npm install",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "docker:dev": "docker-compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f docker/docker-compose.yml down",
+    "docker:build": "docker-compose -f docker/docker-compose.yml build",
+    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ImmanuelN/artisanmarket-frontend.git"
+  },
+  "keywords": [
+    "artisan",
+    "marketplace",
+    "e-commerce",
+    "multi-vendor",
+    "react",
+    "node",
+    "mongodb"
+  ],
+  "author": "NovaEdge",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ImmanuelN/artisanmarket-frontend/issues"
+  },
+  "homepage": "https://github.com/ImmanuelN/artisanmarket-frontend#readme",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
