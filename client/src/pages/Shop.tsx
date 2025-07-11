@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FunnelIcon, StarIcon, HeartIcon, ShoppingBagIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchProducts, updateFilters } from '../store/slices/productSlice';
+import { Container, Card, Button, Input } from '../components/ui';
 
 const Shop = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -53,87 +54,90 @@ const Shop = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Shop</h1>
-              <p className="text-gray-600 mt-1">
-                Showing {products.length} of {pagination.totalItems} products
-              </p>
-            </div>
-            
-            {/* Search and Sort */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  value={filters.search || ''}
-                  onChange={(e) => handleFilterChange({ search: e.target.value })}
-                />
+        <Container>
+          <div className="py-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div>
+                <p className="text-gray-600 mt-1">
+                  Showing {products.length} of {pagination.totalItems} products
+                </p>
               </div>
               
-              <select
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                onChange={(e) => handleFilterChange({ sort: e.target.value })}
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {/* Search and Sort */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search products..."
+                    className="w-full sm:w-80"
+                    value={filters.search || ''}
+                    onChange={(e) => handleFilterChange({ search: e.target.value })}
+                  />
+                </div>
+                
+                <select
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  onChange={(e) => handleFilterChange({ sort: e.target.value })}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
 
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <FunnelIcon className="w-5 h-5 mr-2" />
-                Filters
-              </button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="lg:hidden"
+                >
+                  <FunnelIcon className="w-5 h-5 mr-2" />
+                  Filters
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <Container className="py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className={`lg:w-64 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className="bg-white p-6 rounded-lg shadow-sm sticky top-8">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <AdjustmentsHorizontalIcon className="w-5 h-5 mr-2" />
-                Filters
-              </h3>
+            <Card className="sticky top-8">
+              <Card.Content>
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <AdjustmentsHorizontalIcon className="w-5 h-5 mr-2" />
+                  Filters
+                </h3>
 
-              {/* Categories */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <label key={category} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="category"
-                        value={category}
-                        checked={filters.category === category || (!filters.category && category === 'All Categories')}
-                        onChange={(e) => handleFilterChange({ category: e.target.value === 'All Categories' ? undefined : e.target.value })}
-                        className="text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{category}</span>
-                    </label>
-                  ))}
+                {/* Categories */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
+                  <div className="space-y-2">
+                    {categories.map((category) => (
+                      <label key={category} className="flex items-center">
+                        <input
+                          type="radio"
+                          name="category"
+                          value={category}
+                          checked={filters.category === category || (!filters.category && category === 'All Categories')}
+                          onChange={(e) => handleFilterChange({ category: e.target.value === 'All Categories' ? undefined : e.target.value })}
+                          className="text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">{category}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Price Range */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
-                <div className="space-y-3">
+                {/* Price Range */}
+                <div className="mb-6">
+                  <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
+                  <div className="space-y-3">
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -194,7 +198,8 @@ const Shop = () => {
               >
                 Clear All Filters
               </button>
-            </div>
+              </Card.Content>
+            </Card>
           </div>
 
           {/* Products Grid */}
@@ -303,7 +308,7 @@ const Shop = () => {
             )}
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 };
