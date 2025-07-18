@@ -4,12 +4,10 @@ import { useSelector, useDispatch } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ShoppingCartIcon, 
-  UserIcon, 
   Bars3Icon, 
   XMarkIcon,
   MagnifyingGlassIcon,
   HeartIcon,
-  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
   BuildingStorefrontIcon
@@ -188,17 +186,7 @@ const Header = () => {
                         <p className="text-sm font-medium text-gray-900">{user.name}</p>
                         <p className="text-sm text-gray-500">{user.email}</p>
                       </div>
-
-                      <div className="py-2">
-                        <Link
-                          to="/profile"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <UserIcon className="w-4 h-4 mr-3" />
-                          My Profile
-                        </Link>
-                        
+                      <div className="py-2">                  
                         {user.role === 'vendor' && (
                           <Link
                             to="/vendor/dashboard"
@@ -211,30 +199,12 @@ const Header = () => {
                         )}
 
                         <Link
-                          to="/profile?tab=orders"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <BuildingStorefrontIcon className="w-4 h-4 mr-3" />
-                          My Orders
-                        </Link>
-
-                        <Link
                           to="/profile?tab=wishlist"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
                           <HeartIcon className="w-4 h-4 mr-3" />
                           Wishlist
-                        </Link>
-
-                        <Link
-                          to="/profile?tab=settings"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Cog6ToothIcon className="w-4 h-4 mr-3" />
-                          Settings
                         </Link>
                       </div>
 
@@ -355,15 +325,6 @@ const Header = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <Link
-                        to="/profile"
-                        className="flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-gray-50 transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <UserIcon className="w-5 h-5 mr-3" />
-                        My Profile
-                      </Link>
-                      
                       {user.role === 'vendor' && (
                         <Link
                           to="/vendor/dashboard"
@@ -374,25 +335,6 @@ const Header = () => {
                           Vendor Dashboard
                         </Link>
                       )}
-
-                      <Link
-                        to="/profile?tab=orders"
-                        className="flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-gray-50 transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <BuildingStorefrontIcon className="w-5 h-5 mr-3" />
-                        My Orders
-                      </Link>
-
-                      <Link
-                        to="/profile?tab=settings"
-                        className="flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-gray-50 transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Cog6ToothIcon className="w-5 h-5 mr-3" />
-                        Settings
-                      </Link>
-
                       <button
                         onClick={() => {
                           handleLogout();
