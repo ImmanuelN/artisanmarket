@@ -34,6 +34,6 @@
   },
   "homepage": "https://github.com/ImmanuelN/artisanmarket-frontend#readme",
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.2"
   }
 }
