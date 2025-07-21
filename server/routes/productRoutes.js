@@ -2,6 +2,7 @@ import express from 'express'
 import Product from '../models/Product.js'
 import { getCache, setCache, deleteCache } from '../config/redis.js'
 import { requireAuth } from '../middleware/authMiddleware.js'; // Assuming auth middleware exists
+import { io } from '../server.js'; // Import Socket.IO instance
 
 const router = express.Router()
 
@@ -197,11 +198,21 @@ router.get('/categories/list', async (req, res) => {
   }
 })
 
+// Helper function to get and emit updated products for a vendor
+const emitVendorProducts = async (vendorId) => {
+  try {
+    const products = await Product.find({ vendor: vendorId });
+    io.to(`vendor-${vendorId}`).emit('products-updated', products);
+  } catch (error) {
+    console.error('Error emitting vendor products:', error);
+  }
+};
+
 // Create a new product
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, description, price, categories, tags, images, inventory } = req.body;
-    const vendorId = req.user.vendorId; // Assuming this is set by auth middleware
+    const vendorId = req.user.vendorId;
 
     if (!vendorId) {
       return res.status(403).json({ success: false, message: "User is not a vendor." });
@@ -220,15 +231,47 @@ router.post('/', requireAuth, async (req, res) => {
     });
 
     await newProduct.save();
-
-    // Invalidate cache for this vendor's products
+    
+    // Invalidate cache and emit update
     const cacheKey = `products:{"status":"active","isDeleted":false,"vendor":"${vendorId}"}:1:12:createdAt:desc`;
     await deleteCache(cacheKey);
-
+    emitVendorProducts(vendorId);
 
     res.status(201).json({ success: true, product: newProduct });
   } catch (error) {
     console.error('Create product error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Example: Update a product (add more routes as needed)
+router.put('/:id', requireAuth, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    // Emit update
+    emitVendorProducts(product.vendor.toString());
+    res.json({ success: true, product });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Example: Delete a product
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    // Emit update
+    emitVendorProducts(product.vendor.toString());
+    res.json({ success: true, message: 'Product deleted' });
+  } catch (error) {
+    console.error('Delete product error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });

@@ -39,9 +39,13 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "@hookform/resolvers": "^5.1.1",
     "imagekit-javascript": "^4.0.1",
     "imagekitio-react": "^4.3.0",
     "multer": "^2.0.2",
-    "react-image-crop": "^11.0.10"
+    "react-hook-form": "^7.60.0",
+    "react-image-crop": "^11.0.10",
+    "socket.io-client": "^4.8.1",
+    "yup": "^1.6.1"
   }
 }

@@ -49,6 +49,7 @@ import Modal from '../../components/ui/Modal';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ProductForm from '../../components/forms/ProductForm';
 import ProductManagementTab from './tabs/ProductManagementTab';
+import { io } from 'socket.io-client';
 
 const VendorDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -150,7 +151,20 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     if (profile && profile._id) {
+      // 1. Fetch the initial product list
       fetchVendorProducts(profile._id);
+
+      // 2. Set up real-time updates
+      const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+      socket.emit('join-vendor-room', profile._id);
+      socket.on('products-updated', (updatedProducts) => {
+        setVendorProducts(updatedProducts);
+      });
+
+      // Clean up on component unmount
+      return () => {
+        socket.disconnect();
+      };
     }
   }, [profile]);
 
