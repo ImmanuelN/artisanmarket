@@ -81,7 +81,7 @@ const StorePage = () => {
           </div>
           <div className="flex flex-wrap justify-center gap-2 mb-2">
             {profile.specialties && profile.specialties.map((cat: string) => (
-              <Badge key={cat} variant="info">{cat}</Badge>
+              <Badge key={cat} color="info">{cat}</Badge>
             ))}
           </div>
         </div>
@@ -101,13 +101,13 @@ const StorePage = () => {
                   <div className="font-semibold mb-1">Craftsmanship</div>
                   <div className="flex flex-wrap gap-2">
                     {profile.craftsmanship.yearsOfExperience && (
-                      <Badge variant="info">{profile.craftsmanship.yearsOfExperience} yrs experience</Badge>
+                      <Badge color="info">{profile.craftsmanship.yearsOfExperience} yrs experience</Badge>
                     )}
                     {profile.craftsmanship.techniques && profile.craftsmanship.techniques.map((t: string) => (
-                      <Badge key={t} variant="info">{t}</Badge>
+                      <Badge key={t} color="info">{t}</Badge>
                     ))}
                     {profile.craftsmanship.materials && profile.craftsmanship.materials.map((m: string) => (
-                      <Badge key={m} variant="info">{m}</Badge>
+                      <Badge key={m} color="info">{m}</Badge>
                     ))}
                   </div>
                 </div>

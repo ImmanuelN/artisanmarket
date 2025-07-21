@@ -1,6 +1,7 @@
 import express from 'express'
 import Product from '../models/Product.js'
-import { getCache, setCache } from '../config/redis.js'
+import { getCache, setCache, deleteCache } from '../config/redis.js'
+import { requireAuth } from '../middleware/authMiddleware.js'; // Assuming auth middleware exists
 
 const router = express.Router()
 
@@ -38,6 +39,10 @@ router.get('/', async (req, res) => {
     
     if (featured === 'true') {
       query.featured = true
+    }
+    // Add vendor filter
+    if (req.query.vendor) {
+      query.vendor = req.query.vendor;
     }
 
     // Create cache key
@@ -169,7 +174,8 @@ router.get('/categories/list', async (req, res) => {
 
     const categories = await Product.aggregate([
       { $match: { status: 'active', isDeleted: false } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $unwind: '$categories' },
+      { $group: { _id: '$categories', count: { $sum: 1 } } },
       { $sort: { count: -1 } }
     ])
 
@@ -190,5 +196,41 @@ router.get('/categories/list', async (req, res) => {
     })
   }
 })
+
+// Create a new product
+router.post('/', requireAuth, async (req, res) => {
+  try {
+    const { title, description, price, categories, tags, images, inventory } = req.body;
+    const vendorId = req.user.vendorId; // Assuming this is set by auth middleware
+
+    if (!vendorId) {
+      return res.status(403).json({ success: false, message: "User is not a vendor." });
+    }
+
+    const newProduct = new Product({
+      title,
+      description,
+      price,
+      categories: categories.map(c => c.toLowerCase().replace(/\s+/g, '-')),
+      tags,
+      images,
+      inventory,
+      vendor: vendorId,
+      status: 'active',
+    });
+
+    await newProduct.save();
+
+    // Invalidate cache for this vendor's products
+    const cacheKey = `products:{"status":"active","isDeleted":false,"vendor":"${vendorId}"}:1:12:createdAt:desc`;
+    await deleteCache(cacheKey);
+
+
+    res.status(201).json({ success: true, product: newProduct });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 export default router

@@ -47,6 +47,8 @@ import ImageKit from "imagekit-javascript";
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 import Modal from '../../components/ui/Modal';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import ProductForm from '../../components/forms/ProductForm';
+import ProductManagementTab from './tabs/ProductManagementTab';
 
 const VendorDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -59,6 +61,8 @@ const VendorDashboard = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [nextTab, setNextTab] = useState('');
+  const [addProductModalOpen, setAddProductModalOpen] = useState(false);
+  const [vendorProducts, setVendorProducts] = useState([]);
 
   // Set initial form data when profile loads
   useEffect(() => {
@@ -108,6 +112,17 @@ const VendorDashboard = () => {
     }
   }
 
+  const fetchVendorProducts = async (vendorId: string) => {
+    try {
+      const response = await api.get(`/products?vendor=${vendorId}`);
+      if (response.data.success) {
+        setVendorProducts(response.data.products);
+      }
+    } catch (error) {
+      console.error('Error fetching vendor products:', error);
+    }
+  };
+
   const updateVendorProfile = async (updatedData: any) => {
     try {
       dispatch(setLoading(true))
@@ -134,11 +149,17 @@ const VendorDashboard = () => {
   }, [user])
 
   useEffect(() => {
+    if (profile && profile._id) {
+      fetchVendorProducts(profile._id);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     if (profile && profileData) {
       // Create copies to avoid changing original objects for comparison
       const initialProfileState = JSON.parse(JSON.stringify(profile));
       const currentFormState = JSON.parse(JSON.stringify(profileData));
-      
+
       // Normalize undefined/null to empty strings for fair comparison
       const normalize = (obj: any) => {
         for (const key in obj) {
@@ -181,6 +202,25 @@ const VendorDashboard = () => {
     if (nextTab) {
       setActiveTab(nextTab);
       setNextTab('');
+    }
+  };
+
+  const handleAddProduct = () => {
+    setAddProductModalOpen(true);
+  };
+  const handleProductSubmit = async (formData: any) => {
+    try {
+      const response = await api.post('/products', formData);
+      if (response.data.success) {
+        showSuccessNotification('Product created successfully!');
+        setAddProductModalOpen(false);
+        // Optional: refetch products or add to state
+      } else {
+        showErrorNotification(response.data.message || 'Failed to create product.');
+      }
+    } catch (error) {
+      console.error('Create product error:', error);
+      showErrorNotification('An error occurred while creating the product.');
     }
   };
 
@@ -324,7 +364,7 @@ const VendorDashboard = () => {
                   </h1>
                   <p className="text-gray-600 flex items-center mt-1">
                     <BuildingStorefrontIcon className="w-4 h-4 mr-1" />
-                    {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'} 
+                    {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'}
                     • Member since {currentProfile?.createdAt ? new Date(currentProfile.createdAt).getFullYear() : 'N/A'}
                   </p>
                 </div>
@@ -339,11 +379,8 @@ const VendorDashboard = () => {
                 </Button>
                   </Link>
                 )}
-                <Button variant="outline" size="sm">
-                  <PencilIcon className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
-                <Button size="sm">
+
+                <Button size="sm" onClick={handleAddProduct}>
                   <PlusIcon className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>
@@ -366,8 +403,7 @@ const VendorDashboard = () => {
                     <button
                       key={tab.id}
                       onClick={() => handleTabChange(tab.id)}
-                      className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                        activeTab === tab.id
+                      className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${activeTab === tab.id
                           ? 'border-amber-500 text-amber-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
@@ -506,7 +542,7 @@ const VendorDashboard = () => {
                                 </div>
                                 <div className="text-right">
                                   <p className="font-semibold text-gray-900">${order.total}</p>
-                                  <Badge variant={getStatusColor(order.status) as any} size="sm">
+                                  <Badge color={getStatusColor(order.status)}>
                                     {order.status}
                                   </Badge>
                                 </div>
@@ -550,29 +586,7 @@ const VendorDashboard = () => {
 
               {/* Products Tab */}
               {activeTab === 'products' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-900">My Products</h2>
-                    <Button>
-                      <PlusIcon className="w-5 h-5 mr-2" />
-                      Add New Product
-                    </Button>
-                  </div>
-                  
-                  <Card>
-                    <Card.Content>
-                      <div className="text-center py-12">
-                        <PhotoIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
-                        <p className="text-gray-600 mb-6">Start by adding your first product to your store.</p>
-                        <Button>
-                          <PlusIcon className="w-5 h-5 mr-2" />
-                          Add Your First Product
-                        </Button>
-                      </div>
-                    </Card.Content>
-                  </Card>
-                </div>
+                <ProductManagementTab products={vendorProducts} onAddProduct={handleAddProduct} />
               )}
 
               {/* Orders Tab */}
@@ -612,7 +626,7 @@ const VendorDashboard = () => {
                                 </div>
                                 <div className="text-right">
                                   <p className="text-lg font-bold text-gray-900">${order.total}</p>
-                                  <Badge variant={getStatusColor(order.status) as any}>
+                                  <Badge color={getStatusColor(order.status) as any}>
                                     {order.status}
                                   </Badge>
                                   <p className="text-sm text-gray-500 mt-1">{order.date}</p>
@@ -869,17 +883,17 @@ const VendorDashboard = () => {
                           <div className="space-y-4">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Verification Status</span>
-                              <Badge variant={(currentProfile as Store)?.verification?.status === 'approved' ? 'success' : (currentProfile as Store)?.verification?.status === 'pending' ? 'warning' : (currentProfile as Store)?.verification?.status === 'rejected' ? 'error' : 'default'}>
+                              <Badge color={(currentProfile as Store)?.verification?.status === 'approved' ? 'success' : (currentProfile as Store)?.verification?.status === 'pending' ? 'warning' : (currentProfile as Store)?.verification?.status === 'rejected' ? 'error' : 'default'}>
                                 {(currentProfile as Store)?.verification?.status === 'approved' && <CheckCircle className="w-4 h-4 inline mr-1" />}
                                 {(currentProfile as Store)?.verification?.status === 'pending' && <Clock className="w-4 h-4 inline mr-1" />}
                                 {(currentProfile as Store)?.verification?.status === 'rejected' && <XCircle className="w-4 h-4 inline mr-1" />}
-                                {['approved','pending','rejected'].indexOf((currentProfile as Store)?.verification?.status) === -1 && <Shield className="w-4 h-4 inline mr-1" />}
+                                {['approved', 'pending', 'rejected'].indexOf((currentProfile as Store)?.verification?.status) === -1 && <Shield className="w-4 h-4 inline mr-1" />}
                                 {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'}
                               </Badge>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Commission Rate</span>
-                              <span className="font-semibold">{currentProfile?.financials?.commissionRate !== undefined ? (currentProfile.financials  .commissionRate * 100) : 0}%</span>
+                              <span className="font-semibold">{currentProfile?.financials?.commissionRate !== undefined ? (currentProfile.financials.commissionRate * 100) : 0}%</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Member Since</span>
@@ -1017,6 +1031,17 @@ const VendorDashboard = () => {
         }
       >
         <p>You have unsaved changes. Would you like to save them before proceeding?</p>
+      </Modal>
+      <Modal
+        isOpen={addProductModalOpen}
+        onClose={() => setAddProductModalOpen(false)}
+        title="Add New Product"
+        size="3xl" // Widen the modal for the form
+      >
+        <ProductForm
+          onSubmit={handleProductSubmit}
+          onCancel={() => setAddProductModalOpen(false)}
+        />
       </Modal>
     </div>
   );

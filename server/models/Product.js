@@ -30,8 +30,8 @@ const productSchema = new mongoose.Schema({
     default: 'USD',
     enum: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY']
   },
-  category: {
-    type: String,
+  categories: {
+    type: [String],
     required: [true, 'Product category is required'],
     enum: [
       'ceramics',
@@ -76,7 +76,6 @@ const productSchema = new mongoose.Schema({
   inventory: {
     quantity: {
       type: Number,
-      required: [true, 'Inventory quantity is required'],
       min: [0, 'Inventory cannot be negative']
     },
     lowStockAlert: {

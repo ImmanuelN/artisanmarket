@@ -1,6 +1,7 @@
 import express from 'express';
 import ImageKit from 'imagekit';
 import dotenv from 'dotenv';
+import multer from 'multer';
 
 // Ensure dotenv is configured right at the start
 dotenv.config();
@@ -45,6 +46,32 @@ router.post('/imagekit-auth', (req, res) => {
   } catch (error) {
     console.error("Error getting ImageKit auth params:", error);
     res.status(500).json({ message: "Could not get authentication parameters." });
+  }
+});
+
+// If requireAuth is available, import it:
+import { requireAuth } from '../middleware/authMiddleware.js';
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// POST /image - upload an image to ImageKit and return the URL
+router.post('/image', requireAuth, upload.single('image'), async (req, res) => {
+  if (!imagekit) {
+    return res.status(500).json({ message: 'ImageKit SDK not initialized.' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+  try {
+    const result = await imagekit.upload({
+      file: req.file.buffer,
+      fileName: req.file.originalname,
+      folder: '/products',
+    });
+    res.json({ success: true, url: result.url });
+  } catch (error) {
+    console.error('ImageKit upload error:', error);
+    res.status(500).json({ success: false, message: 'Image upload failed.' });
   }
 });
 

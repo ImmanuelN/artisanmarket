@@ -94,7 +94,6 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes) // Use real auth routes with MongoDB
-app.use('/api', mockApiRoutes) // Also mount at /api root for products
 app.use('/api/products', productRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/vendors', vendorRoutes)

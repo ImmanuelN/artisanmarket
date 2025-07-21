@@ -34,11 +34,14 @@
   },
   "homepage": "https://github.com/ImmanuelN/artisanmarket-frontend#readme",
   "devDependencies": {
+    "@types/react-beautiful-dnd": "^13.1.8",
     "concurrently": "^8.2.2"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "imagekit-javascript": "^4.0.1",
     "imagekitio-react": "^4.3.0",
+    "multer": "^2.0.2",
     "react-image-crop": "^11.0.10"
   }
 }
