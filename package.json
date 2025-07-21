@@ -35,5 +35,10 @@
   "homepage": "https://github.com/ImmanuelN/artisanmarket-frontend#readme",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "imagekit-javascript": "^4.0.1",
+    "imagekitio-react": "^4.3.0",
+    "react-image-crop": "^11.0.10"
   }
 }

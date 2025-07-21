@@ -246,7 +246,8 @@ const vendorSchema = new mongoose.Schema({
   },
   lastActive: Date
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'store_profiles'
 })
 
 // Indexes for better performance

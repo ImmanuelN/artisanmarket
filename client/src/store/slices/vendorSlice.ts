@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { Store } from '../../types/stores';
 
 interface VendorProduct {
   id: string
@@ -21,17 +22,7 @@ interface VendorStats {
 }
 
 interface VendorState {
-  profile: {
-    id: string
-    storeName: string
-    email: string
-    bio: string
-    avatar: string
-    approved: boolean
-    balance: number
-    commissionRate: number
-    createdAt: string
-  } | null
+  profile: Store | null;
   products: VendorProduct[]
   stats: VendorStats | null
   orders: any[]
@@ -58,8 +49,8 @@ const vendorSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
     },
-    setVendorProfile: (state, action: PayloadAction<VendorState['profile']>) => {
-      state.profile = action.payload
+    setVendorProfile: (state, action: PayloadAction<Store>) => {
+      state.profile = action.payload;
     },
     setVendorProducts: (state, action: PayloadAction<VendorProduct[]>) => {
       state.products = action.payload

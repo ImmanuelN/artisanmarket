@@ -22,12 +22,12 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import VendorDashboard from './pages/vendor/VendorDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
-import Profile from './pages/Profile'
 import About from './pages/About'
 import Contact from './pages/Contact'
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import StorePage from './pages/vendor/StorePage'
 
 function App() {
   const dispatch = useDispatch<AppDispatch>()
@@ -55,6 +55,7 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/vendor/store/:vendorId" element={<StorePage />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
@@ -64,11 +65,6 @@ function App() {
           <Route path="/checkout" element={
             <ProtectedRoute>
               <Checkout />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
             </ProtectedRoute>
           } />
           
@@ -85,6 +81,8 @@ function App() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
+
+          
         </Routes>
       </motion.main>
       

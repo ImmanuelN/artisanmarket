@@ -31,11 +31,22 @@ import {
   GlobeAltIcon,
   HeartIcon,
   ChatBubbleLeftRightIcon,
+  CameraIcon,
+  TrashIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
 import { Container, Card, Button, Badge, Input } from '../../components/ui'
 import { setVendorProfile, setVendorStats, setVendorOrders, setLoading, setError } from '../../store/slices/vendorSlice'
 import api from '../../utils/api'
+import { Store } from '../../types/stores';
+import { CheckCircle, Clock, XCircle, Shield } from 'lucide-react';
+import StoreLogo from '../../components/ui/StoreLogo';
+import StoreBanner from '../../components/ui/StoreBanner';
+import ImageKit from "imagekit-javascript";
+import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
+import Modal from '../../components/ui/Modal';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const VendorDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -43,16 +54,18 @@ const VendorDashboard = () => {
   const { profile, products, stats, orders, loading } = useSelector((state: RootState) => state.vendor)
   
   const [activeTab, setActiveTab] = useState('overview')
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [profileData, setProfileData] = useState({
-    storeName: '',
-    storeDescription: '',
-    email: '',
-    phone: '',
-    website: '',
-    location: '',
-    bio: ''
-  })
+  const [profileData, setProfileData] = useState<Store | null>(null)
+  const [uploading, setUploading] = useState<{ logo: boolean; banner: boolean }>({ logo: false, banner: false });
+  const [isDirty, setIsDirty] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [nextTab, setNextTab] = useState('');
+
+  // Set initial form data when profile loads
+  useEffect(() => {
+    if (profile) {
+      setProfileData(profile);
+    }
+  }, [profile]);
 
   // API Functions
   const fetchVendorProfile = async () => {
@@ -61,22 +74,11 @@ const VendorDashboard = () => {
       const response = await api.get('/vendors/profile')
       if (response.data.success) {
         dispatch(setVendorProfile(response.data.profile))
-        // Update local state
-        const profile = response.data.profile
-        setProfileData({
-          storeName: profile.storeName || '',
-          storeDescription: profile.storeDescription || '',
-          email: profile.email || user?.email || '',
-          phone: profile.phone || '',
-          website: profile.website || '',
-          location: profile.location || '',
-          bio: profile.bio || ''
-        })
+        setProfileData(response.data.profile) // Set local state directly
       }
     } catch (error) {
       console.error('Error fetching vendor profile:', error)
-      // Use mock data as fallback
-      initializeMockData()
+      dispatch(setError('Failed to load profile'))
     } finally {
       dispatch(setLoading(false))
     }
@@ -90,8 +92,7 @@ const VendorDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching vendor stats:', error)
-      // Use mock stats as fallback
-      dispatch(setVendorStats(mockVendorData.stats))
+      dispatch(setError('Failed to load stats'))
     }
   }
 
@@ -103,8 +104,7 @@ const VendorDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching vendor orders:', error)
-      // Use mock orders as fallback
-      dispatch(setVendorOrders(mockVendorData.orders))
+      dispatch(setError('Failed to load orders'))
     }
   }
 
@@ -114,107 +114,14 @@ const VendorDashboard = () => {
       const response = await api.put('/vendors/profile', updatedData)
       if (response.data.success) {
         dispatch(setVendorProfile(response.data.profile))
-        setIsEditingProfile(false)
       }
     } catch (error) {
       console.error('Error updating vendor profile:', error)
       dispatch(setError('Failed to update profile'))
       // Just update local state for demo
-      setIsEditingProfile(false)
     } finally {
       dispatch(setLoading(false))
     }
-  }
-
-  // Initialize mock data function
-  const initializeMockData = () => {
-    dispatch(setVendorProfile(mockVendorData.profile))
-    setProfileData({
-      storeName: mockVendorData.profile.storeName,
-      storeDescription: mockVendorData.profile.storeDescription,
-      email: mockVendorData.profile.email,
-      phone: mockVendorData.profile.phone,
-      website: mockVendorData.profile.website,
-      location: mockVendorData.profile.location,
-      bio: mockVendorData.profile.bio
-    })
-  }
-
-  // Mock data for demonstration - in real app, this would come from API
-  const mockVendorData = {
-    profile: {
-      id: user?.id || '1',
-      storeName: 'Artisan Creations Studio',
-      email: user?.email || 'vendor@example.com',
-      bio: 'Passionate artisan creating unique handcrafted pieces with over 10 years of experience.',
-      avatar: user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-      approved: true,
-      balance: 2450.75,
-      commissionRate: 0.15,
-      createdAt: '2023-01-15',
-      phone: '+1 (555) 123-4567',
-      website: 'https://artisancreations.com',
-      location: 'Portland, Oregon',
-      storeDescription: 'Specializing in handcrafted ceramics, wooden furniture, and unique home decor items made with sustainable materials.'
-    },
-    stats: {
-      totalProducts: 45,
-      totalSales: 1234,
-      totalRevenue: 18750.50,
-      totalOrders: 892,
-      monthlyRevenue: [1200, 1800, 2200, 1900, 2400, 2100, 2800, 2600, 3100, 2900, 3400, 3200],
-      topProducts: [
-        {
-          id: '1',
-          title: 'Handcrafted Ceramic Vase',
-          price: 89.99,
-          inventory: 12,
-          status: 'active' as const,
-          sales: 156,
-          revenue: 14038.44,
-          createdAt: '2024-01-15'
-        },
-        {
-          id: '2',
-          title: 'Wooden Coffee Table',
-          price: 299.99,
-          inventory: 3,
-          status: 'active' as const,
-          sales: 34,
-          revenue: 10199.66,
-          createdAt: '2024-02-10'
-        }
-      ]
-    },
-    orders: [
-      {
-        id: 'ORD-001',
-        customer: 'Sarah Johnson',
-        items: ['Ceramic Vase', 'Wooden Bowl'],
-        total: 145.50,
-        status: 'pending',
-        date: '2024-07-15',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
-      },
-      {
-        id: 'ORD-002',
-        customer: 'Michael Chen',
-        items: ['Coffee Table'],
-        total: 299.99,
-        status: 'shipped',
-        date: '2024-07-12',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-      },
-      {
-        id: 'ORD-003',
-        customer: 'Emily Davis',
-        items: ['Decorative Bowl', 'Candle Holder'],
-        total: 78.50,
-        status: 'delivered',
-        date: '2024-07-10',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-      }
-    ]
   }
 
   useEffect(() => {
@@ -223,13 +130,59 @@ const VendorDashboard = () => {
       fetchVendorProfile()
       fetchVendorStats()
       fetchVendorOrders()
-    } else {
-      // Use mock data for demo
-      initializeMockData()
-      dispatch(setVendorStats(mockVendorData.stats))
-      dispatch(setVendorOrders(mockVendorData.orders))
     }
   }, [user])
+
+  useEffect(() => {
+    if (profile && profileData) {
+      // Create copies to avoid changing original objects for comparison
+      const initialProfileState = JSON.parse(JSON.stringify(profile));
+      const currentFormState = JSON.parse(JSON.stringify(profileData));
+      
+      // Normalize undefined/null to empty strings for fair comparison
+      const normalize = (obj: any) => {
+        for (const key in obj) {
+          if (obj[key] === null || obj[key] === undefined) {
+            obj[key] = "";
+          } else if (typeof obj[key] === 'object') {
+            normalize(obj[key]);
+          }
+        }
+        return obj;
+      };
+
+      const hasChanges = JSON.stringify(normalize(initialProfileState)) !== JSON.stringify(normalize(currentFormState));
+      setIsDirty(hasChanges);
+    }
+  }, [profile, profileData]);
+
+  const handleTabChange = (tabId: string) => {
+    if (isDirty) {
+      setNextTab(tabId);
+      setModalOpen(true);
+    } else {
+      setActiveTab(tabId);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    await updateVendorProfile(profileData);
+    setIsDirty(false);
+    if (nextTab) {
+      setActiveTab(nextTab);
+      setNextTab('');
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    setProfileData(profile as Store); // Correctly cast to Store
+    setIsDirty(false);
+    setModalOpen(false);
+    if (nextTab) {
+      setActiveTab(nextTab);
+      setNextTab('');
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: ChartBarIcon },
@@ -265,14 +218,81 @@ const VendorDashboard = () => {
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setProfileData(prev => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    const keys = name.split('.');
 
-  // Use either real profile data or mock data
-  const currentProfile = profile || mockVendorData.profile
-  const currentStats = stats || mockVendorData.stats
-  const currentOrders = orders || mockVendorData.orders
+    setProfileData((prev: Store | null) => {
+      if (!prev) return null;
+      const newData = JSON.parse(JSON.stringify(prev)); // Deep copy
+      let temp = newData;
+      for (let i = 0; i < keys.length - 1; i++) {
+        temp[keys[i]] = temp[keys[i]] || {};
+        temp = temp[keys[i]];
+      }
+      temp[keys[keys.length - 1]] = value;
+      return newData;
+    });
+  };
+
+  // Add image preview and upload handlers
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      setUploading((prev) => ({ ...prev, [name]: true }));
+
+      // Instant preview
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setProfileData((prev: any) => ({ ...prev, [name]: ev.target?.result as string }));
+      };
+      reader.readAsDataURL(files[0]);
+
+      try {
+        const authResponse = await fetch('/api/upload/imagekit-auth', {
+          method: 'POST',
+        });
+
+        if (!authResponse.ok) {
+          throw new Error(`Auth request failed with status: ${authResponse.status}`);
+        }
+
+        const authParams = await authResponse.json();
+
+        const imagekit = new ImageKit({
+          publicKey: import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY || '',
+          urlEndpoint: import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || '',
+        });
+
+        imagekit.upload(
+          {
+            file: files[0],
+            fileName: files[0].name,
+            tags: [name],
+            ...authParams, // Pass token, expire, and signature directly
+          },
+          (err: any, result: any) => {
+            setUploading((prev) => ({ ...prev, [name]: false }));
+            if (err) {
+              console.error('ImageKit upload error after auth:', err);
+              showErrorNotification('Image upload failed.');
+            } else if (result) {
+              setProfileData((prev: any) => ({ ...prev, [name]: result.url }));
+              showSuccessNotification('Image uploaded!');
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Critical error during image upload process:", error);
+        setUploading((prev) => ({ ...prev, [name]: false }));
+        showErrorNotification('Upload failed. Check console for details.');
+      }
+    }
+  };
+
+  // Use (profile as Store) for all type assertions where needed
+  const currentProfile = profile as unknown as Store
+  const currentStats = stats
+  const currentOrders = orders
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
@@ -288,30 +308,37 @@ const VendorDashboard = () => {
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <img
-                    src={currentProfile.avatar}
-                    alt={currentProfile.storeName}
+                    src={currentProfile?.logo || ''}
+                    alt={currentProfile?.storeName}
                     className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
                   />
+                  {currentProfile?.verification?.status === 'approved' && (
                   <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
                     <CheckCircleIcon className="w-3 h-3 text-white" />
                   </div>
+                  )}
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">
-                    {currentProfile.storeName}
+                    {currentProfile?.storeName}
                   </h1>
                   <p className="text-gray-600 flex items-center mt-1">
                     <BuildingStorefrontIcon className="w-4 h-4 mr-1" />
-                    Verified Vendor • Member since {new Date(currentProfile.createdAt).getFullYear()}
+                    {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'} 
+                    • Member since {currentProfile?.createdAt ? new Date(currentProfile.createdAt).getFullYear() : 'N/A'}
                   </p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-3">
+                {currentProfile?._id && (
+                  <Link to={`/vendor/store/${currentProfile._id}`}>
                 <Button variant="outline" size="sm">
                   <EyeIcon className="w-4 h-4 mr-2" />
                   View Store
                 </Button>
+                  </Link>
+                )}
                 <Button variant="outline" size="sm">
                   <PencilIcon className="w-4 h-4 mr-2" />
                   Edit Profile
@@ -338,7 +365,7 @@ const VendorDashboard = () => {
                   return (
                     <button
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
+                      onClick={() => handleTabChange(tab.id)}
                       className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                         activeTab === tab.id
                           ? 'border-amber-500 text-amber-600'
@@ -373,7 +400,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              ${currentStats.totalRevenue.toLocaleString()}
+                              ${currentStats?.totalRevenue?.toLocaleString() || '0.00'}
                             </p>
                             <p className="text-sm text-gray-600">Total Revenue</p>
                             <div className="flex items-center mt-2">
@@ -393,7 +420,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              {currentStats.totalOrders.toLocaleString()}
+                              {currentStats?.totalOrders?.toLocaleString() || '0'}
                             </p>
                             <p className="text-sm text-gray-600">Total Orders</p>
                             <div className="flex items-center mt-2">
@@ -413,7 +440,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              {currentStats.totalProducts}
+                              {currentStats?.totalProducts || '0'}
                             </p>
                             <p className="text-sm text-gray-600">Active Products</p>
                             <div className="flex items-center mt-2">
@@ -433,7 +460,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              ${currentProfile.balance.toFixed(2)}
+                              ${currentProfile?.financials?.balance?.toFixed(2) || '0.00'}
                             </p>
                             <p className="text-sm text-gray-600">Available Balance</p>
                             <div className="flex items-center mt-2">
@@ -462,7 +489,7 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentOrders.slice(0, 3).map((order) => {
+                          {currentOrders?.slice(0, 3).map((order) => {
                             const StatusIcon = getStatusIcon(order.status)
                             return (
                               <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -497,7 +524,7 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentStats.topProducts.map((product, index) => (
+                          {currentStats?.topProducts?.map((product, index) => (
                             <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -566,7 +593,7 @@ const VendorDashboard = () => {
                   <Card>
                     <Card.Content>
                       <div className="space-y-4">
-                        {currentOrders.map((order) => {
+                        {currentOrders?.map((order) => {
                           const StatusIcon = getStatusIcon(order.status)
                           return (
                             <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
@@ -622,13 +649,16 @@ const VendorDashboard = () => {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">Store Profile</h2>
+                    {isDirty && (
                     <Button
-                      variant="outline"
-                      onClick={() => isEditingProfile ? handleProfileUpdate() : setIsEditingProfile(true)}
+                        variant="primary"
+                        onClick={handleSaveChanges}
+                        disabled={uploading.logo || uploading.banner}
                     >
                       <PencilIcon className="w-5 h-5 mr-2" />
-                      {isEditingProfile ? 'Save Changes' : 'Edit Profile'}
+                        {uploading.logo || uploading.banner ? 'Uploading...' : 'Save Changes'}
                     </Button>
+                    )}
                   </div>
 
                   <div className="grid lg:grid-cols-3 gap-8">
@@ -644,15 +674,11 @@ const VendorDashboard = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Store Name
                               </label>
-                              {isEditingProfile ? (
                                 <Input
                                   name="storeName"
-                                  value={profileData.storeName}
+                                value={profileData?.storeName || ''}
                                   onChange={handleInputChange}
                                 />
-                              ) : (
-                                <p className="text-gray-900">{profileData.storeName}</p>
-                              )}
                             </div>
 
                             <div>
@@ -661,7 +687,7 @@ const VendorDashboard = () => {
                               </label>
                               <div className="flex items-center">
                                 <EnvelopeIcon className="w-5 h-5 text-gray-400 mr-2" />
-                                <p className="text-gray-900">{profileData.email}</p>
+                                <p className="text-gray-900">{profileData?.contact?.email || ''}</p>
                               </div>
                             </div>
 
@@ -669,56 +695,56 @@ const VendorDashboard = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Phone
                               </label>
-                              {isEditingProfile ? (
                                 <Input
-                                  name="phone"
-                                  value={profileData.phone}
+                                name="contact.phone"
+                                value={profileData?.contact?.phone || ''}
                                   onChange={handleInputChange}
                                 />
-                              ) : (
-                                <div className="flex items-center">
-                                  <PhoneIcon className="w-5 h-5 text-gray-400 mr-2" />
-                                  <p className="text-gray-900">{profileData.phone}</p>
-                                </div>
-                              )}
                             </div>
 
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Website
                               </label>
-                              {isEditingProfile ? (
+                              <div className="flex items-center gap-2">
                                 <Input
-                                  name="website"
-                                  value={profileData.website}
+                                  name="contact.website"
+                                  value={profileData?.contact?.website || ''}
                                   onChange={handleInputChange}
+                                  className="flex-grow"
+                                  placeholder="https://yourstore.com"
                                 />
-                              ) : (
-                                <div className="flex items-center">
-                                  <GlobeAltIcon className="w-5 h-5 text-gray-400 mr-2" />
-                                  <a href={profileData.website} className="text-amber-600 hover:text-amber-700">
-                                    {profileData.website}
-                                  </a>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm" // Changed from "icon"
+                                  className="p-2" // Add padding to make it square
+                                  onClick={() => {
+                                    const url = profileData?.contact?.website;
+                                    if (url) {
+                                      let fullUrl = url;
+                                      if (!/^https?:\/\//i.test(fullUrl)) {
+                                        fullUrl = 'https://' + fullUrl;
+                                      }
+                                      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                                    }
+                                  }}
+                                  disabled={!profileData?.contact?.website}
+                                >
+                                  <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                                </Button>
                                 </div>
-                              )}
                             </div>
 
                             <div className="md:col-span-2">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Location
                               </label>
-                              {isEditingProfile ? (
                                 <Input
-                                  name="location"
-                                  value={profileData.location}
+                                name="business.address.city"
+                                value={profileData?.business?.address?.city || ''}
                                   onChange={handleInputChange}
                                 />
-                              ) : (
-                                <div className="flex items-center">
-                                  <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
-                                  <p className="text-gray-900">{profileData.location}</p>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </Card.Content>
@@ -729,17 +755,106 @@ const VendorDashboard = () => {
                           <Card.Title>Store Description</Card.Title>
                         </Card.Header>
                         <Card.Content>
-                          {isEditingProfile ? (
                             <textarea
                               name="storeDescription"
-                              value={profileData.storeDescription}
+                            value={profileData?.storeDescription || ''}
                               onChange={handleInputChange}
                               rows={4}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                             />
-                          ) : (
-                            <p className="text-gray-900">{profileData.storeDescription}</p>
-                          )}
+                        </Card.Content>
+                      </Card>
+                      <Card>
+                        <Card.Header>
+                          <Card.Title>Logo & Banner</Card.Title>
+                        </Card.Header>
+                        <Card.Content>
+                          <div className="relative w-full mb-6 flex flex-col items-center">
+                            <StoreBanner src={profileData?.banner} height="h-32 md:h-48 w-full" />
+                            <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0 translate-y-1/2 z-10">
+                              <StoreLogo src={profileData?.logo} />
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-6 mt-8">
+                            <div className="flex flex-col items-center">
+                              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Store Logo</label>
+                              <div className="flex items-center gap-2 justify-center">
+                                <input
+                                  type="file"
+                                  name="logo"
+                                  accept="image/*"
+                                  id="logo-upload"
+                                  className="hidden"
+                                  onChange={handleImageChange}
+                                />
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center px-3 py-2 bg-amber-100 text-amber-700 rounded-lg shadow hover:bg-amber-200 focus:outline-none"
+                                  onClick={() => document.getElementById('logo-upload')?.click()}
+                                  disabled={uploading.logo}
+                                >
+                                  {uploading.logo ? (
+                                    <svg className="animate-spin h-5 w-5 text-amber-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  ) : (
+                                    <CameraIcon className="w-5 h-5 mr-2" />
+                                  )}
+                                  Upload Logo
+                                </button>
+                                {profileData?.logo && (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center px-2 py-2 bg-red-100 text-red-600 rounded-lg shadow hover:bg-red-200 focus:outline-none"
+                                    onClick={() => setProfileData((prev: any) => ({ ...prev, logo: '' }))}
+                                  >
+                                    <TrashIcon className="w-5 h-5" />
+                                    <span className="sr-only">Remove Logo</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Store Banner</label>
+                              <div className="flex items-center gap-2 justify-center">
+                                <input
+                                  type="file"
+                                  name="banner"
+                                  accept="image/*"
+                                  id="banner-upload"
+                                  className="hidden"
+                                  onChange={handleImageChange}
+                                />
+                                <button
+                                  type="button"
+                                  className="inline-flex items-center px-3 py-2 bg-amber-100 text-amber-700 rounded-lg shadow hover:bg-amber-200 focus:outline-none"
+                                  onClick={() => document.getElementById('banner-upload')?.click()}
+                                  disabled={uploading.banner}
+                                >
+                                  {uploading.banner ? (
+                                    <svg className="animate-spin h-5 w-5 text-amber-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                  ) : (
+                                    <CameraIcon className="w-5 h-5 mr-2" />
+                                  )}
+                                  Upload Banner
+                                </button>
+                                {profileData?.banner && (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center px-2 py-2 bg-red-100 text-red-600 rounded-lg shadow hover:bg-red-200 focus:outline-none"
+                                    onClick={() => setProfileData((prev: any) => ({ ...prev, banner: '' }))}
+                                  >
+                                    <TrashIcon className="w-5 h-5" />
+                                    <span className="sr-only">Remove Banner</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </Card.Content>
                       </Card>
                     </div>
@@ -754,15 +869,21 @@ const VendorDashboard = () => {
                           <div className="space-y-4">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Verification Status</span>
-                              <Badge variant="success">Verified</Badge>
+                              <Badge variant={(currentProfile as Store)?.verification?.status === 'approved' ? 'success' : (currentProfile as Store)?.verification?.status === 'pending' ? 'warning' : (currentProfile as Store)?.verification?.status === 'rejected' ? 'error' : 'default'}>
+                                {(currentProfile as Store)?.verification?.status === 'approved' && <CheckCircle className="w-4 h-4 inline mr-1" />}
+                                {(currentProfile as Store)?.verification?.status === 'pending' && <Clock className="w-4 h-4 inline mr-1" />}
+                                {(currentProfile as Store)?.verification?.status === 'rejected' && <XCircle className="w-4 h-4 inline mr-1" />}
+                                {['approved','pending','rejected'].indexOf((currentProfile as Store)?.verification?.status) === -1 && <Shield className="w-4 h-4 inline mr-1" />}
+                                {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'}
+                              </Badge>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Commission Rate</span>
-                              <span className="font-semibold">{(mockVendorData.profile.commissionRate * 100)}%</span>
+                              <span className="font-semibold">{currentProfile?.financials?.commissionRate !== undefined ? (currentProfile.financials  .commissionRate * 100) : 0}%</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Member Since</span>
-                              <span className="font-semibold">{new Date(mockVendorData.profile.createdAt).getFullYear()}</span>
+                              <span className="font-semibold">{currentProfile?.createdAt ? new Date(currentProfile.createdAt).getFullYear() : 'N/A'}</span>
                             </div>
                           </div>
                         </Card.Content>
@@ -875,8 +996,30 @@ const VendorDashboard = () => {
           </AnimatePresence>
         </div>
       </Container>
+      {isDirty && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-amber-100 text-amber-800 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+          <ExclamationTriangleIcon className="w-6 h-6" />
+          <span>You have unsaved changes.</span>
+          <Button size="sm" onClick={handleSaveChanges} disabled={uploading.logo || uploading.banner}>
+            {uploading.logo || uploading.banner ? 'Uploading...' : 'Save Changes'}
+          </Button>
     </div>
-  )
-}
+      )}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Unsaved Changes"
+        footer={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleDiscardChanges}>Discard</Button>
+            <Button onClick={handleSaveChanges}>Save Changes</Button>
+          </div>
+        }
+      >
+        <p>You have unsaved changes. Would you like to save them before proceeding?</p>
+      </Modal>
+    </div>
+  );
+};
 
-export default VendorDashboard
+export default VendorDashboard;
