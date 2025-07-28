@@ -1,11 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FunnelIcon, StarIcon, HeartIcon, ShoppingBagIcon, AdjustmentsHorizontalIcon, MagnifyingGlassIcon, ClockIcon, BuildingStorefrontIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { RootState, AppDispatch } from '../store/store';
-import { fetchProducts, updateFilters } from '../store/slices/productSlice';
-import { Container, Card, Button, Input, Badge } from '../components/ui';
+import { FunnelIcon, ShoppingBagIcon, AdjustmentsHorizontalIcon, MagnifyingGlassIcon, BuildingStorefrontIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { Container, Card, Button, Input, Badge, ProductCard } from '../components/ui';
 import api from '../utils/api';
 
 interface Product {
@@ -42,12 +39,10 @@ interface Store {
 // Helper function to convert category to kebab-case for backend
 const formatCategory = (category: string) => category.toLowerCase().replace(/\s+/g, '-');
 
-// Helper function to convert kebab-case to title case for display
-const unformatCategory = (category: string) =>
-  category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
 
 const Shop = () => {
-  const dispatch = useDispatch<AppDispatch>();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -320,7 +315,7 @@ const Shop = () => {
       <Container className="py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <div className={`lg:w-64 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+          <div className={`lg:w-48 ${showFilters ? 'block' : 'hidden lg:block'}`}>
             <Card className="sticky top-8">
               <Card.Content>
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -385,7 +380,7 @@ const Shop = () => {
           {/* Products Grid */}
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {[...Array(12)].map((_, index) => (
                   <div key={index} className="animate-pulse">
                     <div className="bg-gray-300 h-64 rounded-lg mb-4"></div>
@@ -411,7 +406,7 @@ const Shop = () => {
                       <BuildingStorefrontIcon className="w-5 h-5 mr-2 text-amber-600" />
                       Stores ({stores.length})
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {stores.map((store) => (
                         <motion.div
                           key={store._id}
@@ -474,54 +469,16 @@ const Shop = () => {
                       <ShoppingBagIcon className="w-5 h-5 mr-2 text-amber-600" />
                       Products ({products.length})
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {products.map((product) => (
-                        <motion.div
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {products.map((product, index) => (
+                        <ProductCard
                           key={product._id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <Link to={`/product/${product._id}`}>
-                            <div className="relative">
-                              <img
-                                src={product.images[0]?.url || 'https://via.placeholder.com/400x300'}
-                                alt={product.title}
-                                className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50">
-                                  <HeartIcon className="w-5 h-5 text-gray-600" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-semibold text-gray-800 mb-1 truncate">{product.title}</h3>
-                              <p className="text-sm text-gray-600 mb-2 truncate">by {product.vendor.storeName}</p>
-                              <div className="flex items-center mb-2">
-                                <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <StarIcon
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < Math.floor(product.ratings.average)
-                                          ? 'text-yellow-400 fill-current'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-sm text-gray-600 ml-1">({product.ratings.count})</span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-lg font-bold text-gray-800">${product.price.toFixed(2)}</span>
-                                <button className="bg-amber-600 text-white p-2 rounded-full hover:bg-amber-700 transition-colors">
-                                  <ShoppingBagIcon className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          </Link>
-                        </motion.div>
+                          product={product}
+                          variant="default"
+                          showWishlist={true}
+                          showAddToCart={true}
+                          index={index}
+                        />
                       ))}
                     </div>
                   </div>

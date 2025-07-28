@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   StarIcon, 
-  HeartIcon, 
   ShoppingBagIcon, 
   UserGroupIcon, 
   GlobeAltIcon,
@@ -13,12 +12,11 @@ import {
   TruckIcon,
   ShieldCheckIcon,
   CreditCardIcon,
-  ArrowRightIcon,
-  EyeIcon
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchFeaturedProducts } from '../store/slices/productSlice';
-import { Container, Card, Button, Badge } from '../components/ui';
+import { Container, Card, Button, Badge, ProductCard } from '../components/ui';
 import api from '../utils/api';
 
 interface Product {
@@ -41,7 +39,7 @@ interface Product {
 
 const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { featuredProducts } = useSelector((state: RootState) => state.products);
+
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [realFeaturedProducts, setRealFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,9 +63,7 @@ const Home = () => {
     }
   };
 
-  // Helper function to convert kebab-case to title case for display
-  const unformatCategory = (category: string) =>
-    category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
 
   const heroImages = [
     'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
@@ -414,12 +410,12 @@ const Home = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-12">
             {loading ? (
               // Loading skeleton
               [...Array(6)].map((_, index) => (
                 <div key={index} className="animate-pulse">
-                  <div className="bg-gray-300 h-64 rounded-lg mb-4"></div>
+                  <div className="bg-gray-300 h-48 rounded-lg mb-4"></div>
                   <div className="bg-gray-300 h-4 rounded w-3/4 mb-2"></div>
                   <div className="bg-gray-300 h-4 rounded w-1/2"></div>
                 </div>
@@ -434,73 +430,16 @@ const Home = () => {
               </div>
             ) : (
               realFeaturedProducts.map((product, index) => (
-              <motion.div
-                key={product._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Link to={`/product/${product._id}`}>
-                  <Card hover className="group overflow-hidden">
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={product.images[0]?.url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop'}
-                        alt={product.title}
-                        className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      
-                      {/* Floating elements */}
-                      <div className="absolute top-4 left-4">
-                        <Badge variant="success" className="bg-white/90 text-green-700">
-                          Featured
-                        </Badge>
-                      </div>
-                      
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-                          <HeartIcon className="w-5 h-5 text-gray-700" />
-                        </button>
-                      </div>
-
-                      <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100">
-                          <EyeIcon className="w-4 h-4 mr-2" />
-                          Quick View
-                        </Button>
-                      </div>
-
-                      {/* Rating badge */}
-                      <div className="absolute top-4 right-4 group-hover:hidden">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-1">
-                          <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium text-gray-900">{product.ratings.average}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Card.Content>
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="font-semibold text-lg text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">
-                            {product.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">by {product.vendor.storeName}</p>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-gray-900">${product.price}</span>
-                          <div className="flex items-center space-x-1 text-sm text-gray-500">
-                            <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span>({product.ratings.count})</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Card.Content>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  variant="featured"
+                  showQuickView={true}
+                  showWishlist={true}
+                  showAddToCart={false}
+                  index={index}
+                />
+              ))
             )}
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Card, Badge, Button } from '../../components/ui';
+import { Container, Card, Badge, Button, ProductCard } from '../../components/ui';
 import api from '../../utils/api';
 import { Building } from 'lucide-react';
 import { CheckCircle, Clock, XCircle, Shield } from 'lucide-react';
@@ -186,15 +186,31 @@ const StorePage = () => {
             {products.length === 0 ? (
               <div className="text-center text-gray-500 py-8">No products found for this store.</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {products.map((product: any, idx: number) => (
-                  <Card key={product._id || idx}>
-                    <Card.Content>
-                      <img src={product.primaryImage || product.images?.[0]?.url} alt={product.title} className="w-full h-40 object-cover rounded mb-2" />
-                      <h3 className="font-semibold text-lg text-gray-900">{product.title}</h3>
-                      <p className="text-gray-600">{product.price} {product.currency || 'USD'}</p>
-                    </Card.Content>
-                  </Card>
+                  <ProductCard
+                    key={product._id || idx}
+                    product={{
+                      _id: product._id,
+                      title: product.title,
+                      description: product.description || '',
+                      price: product.price,
+                      images: product.images || [{ url: product.primaryImage || '' }],
+                      vendor: {
+                        storeName: profile.storeName,
+                        _id: profile._id
+                      },
+                      ratings: {
+                        average: product.ratings?.average || 0,
+                        count: product.ratings?.count || 0
+                      },
+                      status: product.status || 'active'
+                    }}
+                    variant="compact"
+                    showWishlist={true}
+                    showAddToCart={true}
+                    index={idx}
+                  />
                 ))}
               </div>
             )}
