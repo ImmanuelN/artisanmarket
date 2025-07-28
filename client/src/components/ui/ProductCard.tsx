@@ -1,7 +1,12 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { StarIcon, HeartIcon, ShoppingBagIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { Card, Badge, Button } from './index';
+import { addToCart } from '../../store/slices/cartSlice';
+import { addToWishlist, removeFromWishlist } from '../../store/slices/wishlistSlice';
+import { RootState } from '../../store/store';
+import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 
 interface Product {
   _id: string;
@@ -40,8 +45,39 @@ const ProductCard = ({
   className = '',
   index = 0
 }: ProductCardProps) => {
+  const dispatch = useDispatch();
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const isInWishlist = wishlistItems.some(item => item._id === product._id);
+  
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      dispatch(addToCart(product));
+      showSuccessNotification('Product added to cart!');
+    } catch (error) {
+      showErrorNotification('Failed to add product to cart');
+    }
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if (isInWishlist) {
+        dispatch(removeFromWishlist(product._id));
+        showSuccessNotification('Product removed from wishlist');
+      } else {
+        dispatch(addToWishlist(product));
+        showSuccessNotification('Product added to wishlist!');
+      }
+    } catch (error) {
+      showErrorNotification('Failed to update wishlist');
+    }
+  };
 
 
 
@@ -73,8 +109,15 @@ const ProductCard = ({
               {/* Wishlist button */}
               {showWishlist && (
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-                    <HeartIcon className="w-5 h-5 text-gray-700" />
+                  <button 
+                    onClick={handleWishlistToggle}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                      isInWishlist 
+                        ? 'bg-red-500 text-white hover:bg-red-600' 
+                        : 'bg-white/90 text-gray-700 hover:bg-white'
+                    }`}
+                  >
+                    <HeartIcon className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
                   </button>
                 </div>
               )}
@@ -128,8 +171,15 @@ const ProductCard = ({
               {/* Wishlist button */}
               {showWishlist && (
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-                    <HeartIcon className="w-5 h-5 text-gray-700" />
+                  <button 
+                    onClick={handleWishlistToggle}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                      isInWishlist 
+                        ? 'bg-red-500 text-white hover:bg-red-600' 
+                        : 'bg-white/90 text-gray-700 hover:bg-white'
+                    }`}
+                  >
+                    <HeartIcon className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
                   </button>
                 </div>
               )}
@@ -137,7 +187,7 @@ const ProductCard = ({
               {/* Add to cart button */}
               {showAddToCart && (
                 <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100">
+                  <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100" onClick={handleAddToCart}>
                     <ShoppingBagIcon className="w-4 h-4 mr-2" />
                     Add to Cart
                   </Button>

@@ -15,7 +15,8 @@ import {
 import { RootState, AppDispatch } from '../../store/store'
 import { logout } from '../../store/slices/authSlice'
 import { toggleCart } from '../../store/slices/cartSlice'
-import { Container, Button, Badge, Logo } from '../ui'
+import { toggleWishlist } from '../../store/slices/wishlistSlice'
+import { Container, Button, Badge, Logo, Cart, Wishlist } from '../ui'
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -30,6 +31,7 @@ const Header = () => {
   
   const { user } = useSelector((state: RootState) => state.auth)
   const { totalItems } = useSelector((state: RootState) => state.cart)
+  const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist)
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -70,8 +72,9 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
-      <Container>
+    <>
+      <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+        <Container>
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 flex-shrink-0 group">
@@ -132,9 +135,38 @@ const Header = () => {
             </button>
 
             {/* Wishlist - Desktop only */}
-            <button className="hidden lg:flex p-2 text-gray-600 hover:text-amber-600 transition-colors">
+            <button 
+              onClick={() => dispatch(toggleWishlist())}
+              className="relative hidden lg:flex p-2 text-gray-600 hover:text-amber-600 transition-colors"
+            >
               <HeartIcon className="w-6 h-6" />
+              {wishlistItems.length > 0 && (
+                <Badge 
+                  variant="error" 
+                  size="sm"
+                  className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
+                >
+                  {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                </Badge>
+              )}
             </button>
+            
+            {/* Wishlist Link - Mobile */}
+            <Link 
+              to="/wishlist"
+              className="lg:hidden relative p-2 text-gray-600 hover:text-amber-600 transition-colors"
+            >
+              <HeartIcon className="w-6 h-6" />
+              {wishlistItems.length > 0 && (
+                <Badge 
+                  variant="error" 
+                  size="sm"
+                  className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
+                >
+                  {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                </Badge>
+              )}
+            </Link>
 
             {/* Cart */}
             <button
@@ -376,6 +408,11 @@ const Header = () => {
         </AnimatePresence>
       </Container>
     </header>
+    
+    {/* Global Cart and Wishlist Sidebars */}
+    <Cart />
+    <Wishlist />
+    </>
   )
 }
 

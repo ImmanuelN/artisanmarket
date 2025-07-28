@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   StarIcon, 
@@ -16,6 +17,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { Container, Button, Badge } from '../components/ui';
+import { addToCart } from '../store/slices/cartSlice';
+import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice';
+import { RootState } from '../store/store';
 import api from '../utils/api';
 import { showSuccessNotification, showErrorNotification } from '../utils/notifications';
 
@@ -76,11 +80,15 @@ interface Product {
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  
+  const isInWishlist = product ? wishlistItems.some(item => item._id === product._id) : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -109,15 +117,31 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    // TODO: Implement add to cart functionality
-    showSuccessNotification('Product added to cart!');
+    try {
+      // Add the product to cart with the selected quantity
+      for (let i = 0; i < quantity; i++) {
+        dispatch(addToCart(product));
+      }
+      showSuccessNotification(`Added ${quantity} ${quantity === 1 ? 'item' : 'items'} to cart!`);
+    } catch (error) {
+      showErrorNotification('Failed to add product to cart');
+    }
   };
 
-  const handleAddToWishlist = () => {
+  const handleWishlistToggle = () => {
     if (!product) return;
     
-    // TODO: Implement add to wishlist functionality
-    showSuccessNotification('Product added to wishlist!');
+    try {
+      if (isInWishlist) {
+        dispatch(removeFromWishlist(product._id));
+        showSuccessNotification('Product removed from wishlist');
+      } else {
+        dispatch(addToWishlist(product));
+        showSuccessNotification('Product added to wishlist!');
+      }
+    } catch (error) {
+      showErrorNotification('Failed to update wishlist');
+    }
   };
 
   const formatCategory = (category: string) => {
@@ -211,10 +235,14 @@ const ProductDetail = () => {
                 </div>
               )}
               <button
-                onClick={handleAddToWishlist}
-                className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+                onClick={handleWishlistToggle}
+                className={`absolute top-4 right-4 p-2 rounded-full shadow-md transition-colors ${
+                  isInWishlist 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                <HeartIcon className="w-5 h-5 text-gray-600" />
+                <HeartIcon className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
               </button>
             </div>
             
@@ -344,28 +372,7 @@ const ProductDetail = () => {
 
             {/* Add to Cart Section */}
             <div className="space-y-4">
-              {isInStock && (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="px-3 py-2 hover:bg-gray-100"
-                    >
-                      -
-                    </button>
-                    <span className="px-4 py-2 border-x border-gray-300">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(Math.min(product.inventory.quantity, quantity + 1))}
-                      className="px-3 py-2 hover:bg-gray-100"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {product.inventory.quantity} available
-                  </span>
-                </div>
-              )}
+              
               
               <div className="flex space-x-4">
                 <Button

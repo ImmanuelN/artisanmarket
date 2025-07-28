@@ -1,13 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 interface Product {
-  id: string
+  _id: string
   title: string
   price: number
-  image: string
-  vendorId: string
-  vendorName: string
-  quantity?: number
+  images: { url: string }[]
+  vendor: {
+    storeName: string
+    _id: string
+  }
+  ratings: {
+    average: number
+    count: number
+  }
+  status: string
 }
 
 interface CartItem extends Product {
@@ -21,8 +27,19 @@ interface CartState {
   isOpen: boolean
 }
 
+const getInitialCartItems = () => {
+  try {
+    const cartData = localStorage.getItem('cart');
+    return cartData ? JSON.parse(cartData) : [];
+  } catch (error) {
+    console.error('Error parsing cart data from localStorage:', error);
+    localStorage.removeItem('cart'); // Clear corrupted data
+    return [];
+  }
+};
+
 const initialState: CartState = {
-  items: JSON.parse(localStorage.getItem('cart') || '[]'),
+  items: getInitialCartItems(),
   totalItems: 0,
   totalPrice: 0,
   isOpen: false,
@@ -48,7 +65,7 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action: PayloadAction<Product>) => {
-      const existingItem = state.items.find(item => item.id === action.payload.id)
+      const existingItem = state.items.find(item => item._id === action.payload._id)
       
       if (existingItem) {
         existingItem.quantity += 1
@@ -62,10 +79,14 @@ const cartSlice = createSlice({
       state.totalPrice = totals.totalPrice
       
       // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(state.items))
+      try {
+        localStorage.setItem('cart', JSON.stringify(state.items))
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error)
+      }
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(item => item.id !== action.payload)
+      state.items = state.items.filter(item => item._id !== action.payload)
       
       // Recalculate totals
       const totals = calculateTotals(state.items)
@@ -73,10 +94,14 @@ const cartSlice = createSlice({
       state.totalPrice = totals.totalPrice
       
       // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(state.items))
+      try {
+        localStorage.setItem('cart', JSON.stringify(state.items))
+      } catch (error) {
+        console.error('Error saving cart to localStorage:', error)
+      }
     },
     updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
-      const item = state.items.find(item => item.id === action.payload.id)
+      const item = state.items.find(item => item._id === action.payload.id)
       if (item) {
         item.quantity = action.payload.quantity
         
@@ -86,14 +111,22 @@ const cartSlice = createSlice({
         state.totalPrice = totals.totalPrice
         
         // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(state.items))
+        try {
+          localStorage.setItem('cart', JSON.stringify(state.items))
+        } catch (error) {
+          console.error('Error saving cart to localStorage:', error)
+        }
       }
     },
     clearCart: (state) => {
       state.items = []
       state.totalItems = 0
       state.totalPrice = 0
-      localStorage.removeItem('cart')
+      try {
+        localStorage.removeItem('cart')
+      } catch (error) {
+        console.error('Error clearing cart from localStorage:', error)
+      }
     },
     toggleCart: (state) => {
       state.isOpen = !state.isOpen
