@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import './models/Review.js';
+import './models/Order.js';
 
 // Load environment variables FIRST
 dotenv.config()

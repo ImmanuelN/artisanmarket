@@ -36,6 +36,7 @@ interface Product {
     storeName: string;
     storeDescription?: string;
     logo?: string;
+    user?: string; // User ID of the vendor
     contact?: {
       email?: string;
       phone?: string;
@@ -82,6 +83,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const user = useSelector((state: RootState) => state.auth.user);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,9 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   
   const isInWishlist = product ? wishlistItems.some(item => item._id === product._id) : false;
+  // Check if current user is the vendor of this product
+  // The product.vendor.user contains the user ID of the vendor
+  const isOwnProduct = user && user.role === 'vendor' && product && product.vendor.user && user.id === product.vendor.user;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -117,6 +122,11 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
+    if (isOwnProduct) {
+      showErrorNotification('You cannot add your own products to cart');
+      return;
+    }
+    
     try {
       // Add the product to cart with the selected quantity
       for (let i = 0; i < quantity; i++) {
@@ -130,6 +140,11 @@ const ProductDetail = () => {
 
   const handleWishlistToggle = () => {
     if (!product) return;
+    
+    if (isOwnProduct) {
+      showErrorNotification('You cannot add your own products to wishlist');
+      return;
+    }
     
     try {
       if (isInWishlist) {
@@ -234,16 +249,18 @@ const ProductDetail = () => {
                   -{discountPercentage}%
                 </div>
               )}
-              <button
-                onClick={handleWishlistToggle}
-                className={`absolute top-4 right-4 p-2 rounded-full shadow-md transition-colors ${
-                  isInWishlist 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <HeartIcon className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
-              </button>
+              {!isOwnProduct && (
+                <button
+                  onClick={handleWishlistToggle}
+                  className={`absolute top-4 right-4 p-2 rounded-full shadow-md transition-colors ${
+                    isInWishlist 
+                      ? 'bg-red-500 text-white hover:bg-red-600' 
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <HeartIcon className={`w-5 h-5 ${isInWishlist ? 'fill-current' : ''}`} />
+                </button>
+              )}
             </div>
             
             {/* Thumbnail Images */}
@@ -377,11 +394,11 @@ const ProductDetail = () => {
               <div className="flex space-x-4">
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!isInStock}
+                  disabled={!isInStock || !!isOwnProduct}
                   className="flex-1"
                 >
                   <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                  {isInStock ? 'Add to Cart' : 'Out of Stock'}
+                  {isOwnProduct ? 'Your Product' : isInStock ? 'Add to Cart' : 'Out of Stock'}
                 </Button>
               </div>
             </div>

@@ -10,7 +10,8 @@ import {
   HeartIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
 import { logout } from '../../store/slices/authSlice'
@@ -126,13 +127,6 @@ const Header = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2 lg:space-x-4">
-            {/* Mobile Search Button - Only show on medium screens */}
-            <button
-              className="hidden md:flex lg:hidden p-2 text-gray-600 hover:text-amber-600 transition-colors"
-              onClick={() => {/* Handle mobile search modal */}}
-            >
-              <MagnifyingGlassIcon className="w-6 h-6" />
-            </button>
 
             {/* Wishlist - Desktop only */}
             <button 
@@ -230,6 +224,14 @@ const Header = () => {
                           </Link>
                         )}
 
+                        <Link
+                          to="/orders"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <ArchiveBoxIcon className="w-4 h-4 mr-3" />
+                          My Orders
+                        </Link>
                         <Link
                           to="/profile?tab=wishlist"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -367,6 +369,14 @@ const Header = () => {
                           Vendor Dashboard
                         </Link>
                       )}
+                      <Link
+                        to="/orders"
+                        className="flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-gray-50 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <ArchiveBoxIcon className="w-5 h-5 mr-3" />
+                        My Orders
+                      </Link>
                       <button
                         onClick={() => {
                           handleLogout();

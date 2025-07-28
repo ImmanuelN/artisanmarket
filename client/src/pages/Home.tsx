@@ -28,6 +28,7 @@ interface Product {
   vendor: {
     storeName: string;
     _id: string;
+    user?: string; // User ID of the vendor
   };
   ratings: {
     average: number;
@@ -214,11 +215,13 @@ const Home = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <Button size="lg" className="group shadow-lg">
-                  <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                  Explore Marketplace
-                  <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
+                <Link to="/shop">
+                  <Button size="lg" className="group shadow-lg">
+                    <ShoppingBagIcon className="w-5 h-5 mr-2" />
+                    Explore Marketplace
+                    <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
                 <Button variant="outline" size="lg" className="group">
                   <PlayIcon className="w-5 h-5 mr-2" />
                   Watch Our Story
@@ -620,25 +623,25 @@ const Home = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link to="/register">
+              <Link to="/why-become-vendor">
                 <Button 
                   size="lg" 
                   variant="secondary"
                   className="bg-white text-gray-900 hover:bg-gray-100 shadow-xl px-8 py-4 text-lg"
                 >
                   <UserGroupIcon className="w-6 h-6 mr-2" />
-                  Become an Artisan
+                  Why Become an Artisan
                 </Button>
               </Link>
               
-              <Link to="/shop">
+              <Link to="/register">
                 <Button 
                   size="lg" 
                   variant="outline"
                   className="border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 text-lg"
                 >
-                  <ShoppingBagIcon className="w-6 h-6 mr-2" />
-                  Start Shopping
+                  <UserGroupIcon className="w-6 h-6 mr-2" />
+                  Become an Artisan
                 </Button>
               </Link>
             </div>
@@ -651,7 +654,7 @@ const Home = () => {
                   placeholder="Enter your email"
                   className="flex-1 px-4 py-3 rounded-l-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
                 />
-                <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-r-lg">
+                <Button className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-l-none rounded-r-lg">
                   Subscribe
                 </Button>
               </div>

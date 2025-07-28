@@ -198,7 +198,8 @@ const StorePage = () => {
                       images: product.images || [{ url: product.primaryImage || '' }],
                       vendor: {
                         storeName: profile.storeName,
-                        _id: profile._id
+                        _id: profile._id,
+                        user: profile.user
                       },
                       ratings: {
                         average: product.ratings?.average || 0,

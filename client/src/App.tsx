@@ -19,12 +19,18 @@ import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import Wishlist from './pages/Wishlist'
 import Checkout from './pages/Checkout'
+import OrderConfirmation from './pages/OrderConfirmation'
+import OrderHistory from './pages/OrderHistory'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import VendorDashboard from './pages/vendor/VendorDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import WhyBecomeVendor from './pages/WhyBecomeVendor'
+
+// Placeholder Pages
+import { Help, Shipping, Returns, FAQ, Privacy, Terms, Cookies } from './pages/PlaceholderPages'
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -57,7 +63,17 @@ function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/why-become-vendor" element={<WhyBecomeVendor />} />
           <Route path="/vendor/store/:vendorId" element={<StorePage />} />
+          
+          {/* Placeholder Pages */}
+          <Route path="/help" element={<Help />} />
+          <Route path="/shipping" element={<Shipping />} />
+          <Route path="/returns" element={<Returns />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookies" element={<Cookies />} />
           
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
@@ -67,6 +83,12 @@ function App() {
           <Route path="/checkout" element={
             <ProtectedRoute>
               <Checkout />
+            </ProtectedRoute>
+          } />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/orders" element={
+            <ProtectedRoute>
+              <OrderHistory />
             </ProtectedRoute>
           } />
           

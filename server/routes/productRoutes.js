@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
 
     // Execute query
     let products = await Product.find(query)
-      .populate('vendor', 'storeName')
+      .populate('vendor', 'storeName user')
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit))
@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
           ...query,
           vendor: { $in: vendorIds }
         })
-        .populate('vendor', 'storeName')
+        .populate('vendor', 'storeName user')
         .sort(sortOptions)
         .skip(skip)
         .limit(parseInt(limit))
@@ -190,7 +190,7 @@ router.get('/search/combined', async (req, res) => {
     }
 
     const products = await Product.find(productQuery)
-      .populate('vendor', 'storeName logo business.address.city business.address.country')
+      .populate('vendor', 'storeName user logo business.address.city business.address.country')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
@@ -248,7 +248,7 @@ router.get('/:id', async (req, res) => {
       });
     }
     const product = await Product.findById(req.params.id)
-      .populate('vendor', 'storeName storeDescription contact business logo')
+      .populate('vendor', 'storeName user storeDescription contact business logo')
       .populate('reviews')
 
     if (!product || product.isDeleted) {
@@ -290,7 +290,7 @@ router.get('/featured/list', async (req, res) => {
       status: 'active',
       isDeleted: false 
     })
-      .populate('vendor', 'storeName')
+      .populate('vendor', 'storeName user')
       .sort({ 'ratings.average': -1 })
       .limit(8)
 

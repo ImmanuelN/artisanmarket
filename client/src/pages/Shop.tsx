@@ -14,6 +14,7 @@ interface Product {
   vendor: {
     storeName: string;
     _id: string;
+    user?: string; // User ID of the vendor
   };
   ratings: {
     average: number;
@@ -380,7 +381,7 @@ const Shop = () => {
           {/* Products Grid */}
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {[...Array(12)].map((_, index) => (
                   <div key={index} className="animate-pulse">
                     <div className="bg-gray-300 h-64 rounded-lg mb-4"></div>
@@ -406,7 +407,7 @@ const Shop = () => {
                       <BuildingStorefrontIcon className="w-5 h-5 mr-2 text-amber-600" />
                       Stores ({stores.length})
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {stores.map((store) => (
                         <motion.div
                           key={store._id}
@@ -469,7 +470,7 @@ const Shop = () => {
                       <ShoppingBagIcon className="w-5 h-5 mr-2 text-amber-600" />
                       Products ({products.length})
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {products.map((product, index) => (
                         <ProductCard
                           key={product._id}

@@ -60,6 +60,11 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/why-become-vendor" className="text-gray-300 hover:text-rust-400 transition-colors">
+                    Why Become a Vendor
+                  </Link>
+                </li>
+                <li>
                   <Link to="/register" className="text-gray-300 hover:text-rust-400 transition-colors">
                     Become a Vendor
                   </Link>

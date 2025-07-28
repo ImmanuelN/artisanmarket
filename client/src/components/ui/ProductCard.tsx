@@ -17,6 +17,7 @@ interface Product {
   vendor: {
     storeName: string;
     _id: string;
+    user?: string; // User ID of the vendor
   };
   ratings: {
     average: number;
@@ -47,7 +48,12 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const user = useSelector((state: RootState) => state.auth.user);
   const isInWishlist = wishlistItems.some(item => item._id === product._id);
+  
+  // Check if current user is the vendor of this product
+  // The product.vendor.user contains the user ID of the vendor
+  const isOwnProduct = user && user.role === 'vendor' && product.vendor.user && user.id === product.vendor.user;
   
   const isFeatured = variant === 'featured';
   const isCompact = variant === 'compact';
@@ -55,6 +61,12 @@ const ProductCard = ({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isOwnProduct) {
+      showErrorNotification('You cannot add your own products to cart');
+      return;
+    }
+    
     try {
       dispatch(addToCart(product));
       showSuccessNotification('Product added to cart!');
@@ -66,6 +78,12 @@ const ProductCard = ({
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (isOwnProduct) {
+      showErrorNotification('You cannot add your own products to wishlist');
+      return;
+    }
+    
     try {
       if (isInWishlist) {
         dispatch(removeFromWishlist(product._id));
@@ -107,7 +125,7 @@ const ProductCard = ({
               </div>
               
               {/* Wishlist button */}
-              {showWishlist && (
+              {showWishlist && !isOwnProduct && (
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <button 
                     onClick={handleWishlistToggle}
@@ -125,10 +143,12 @@ const ProductCard = ({
               {/* Quick view button */}
               {showQuickView && (
                 <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100">
-                    <EyeIcon className="w-4 h-4 mr-2" />
-                    Quick View
-                  </Button>
+                  <Link to={`/product/${product._id}`}>
+                    <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100">
+                      <EyeIcon className="w-4 h-4 mr-2" />
+                      Quick View
+                    </Button>
+                  </Link>
                 </div>
               )}
 
@@ -169,7 +189,7 @@ const ProductCard = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               
               {/* Wishlist button */}
-              {showWishlist && (
+              {showWishlist && !isOwnProduct && (
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <button 
                     onClick={handleWishlistToggle}
@@ -185,7 +205,7 @@ const ProductCard = ({
               )}
 
               {/* Add to cart button */}
-              {showAddToCart && (
+              {showAddToCart && !isOwnProduct && (
                 <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <Button size="sm" className="w-full bg-white text-gray-900 hover:bg-gray-100" onClick={handleAddToCart}>
                     <ShoppingBagIcon className="w-4 h-4 mr-2" />
