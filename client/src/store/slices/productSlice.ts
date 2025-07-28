@@ -161,34 +161,11 @@ export const fetchFeaturedProducts = createAsyncThunk(
   'products/fetchFeatured',
   async () => {
     try {
-      const response = await api.get('/products/featured');
-      return response.data;
+      const response = await api.get('/products?featured=true&limit=6');
+      return response.data.products || [];
     } catch (error) {
-      // For development, return mock data
-      return [
-        {
-          _id: '1',
-          name: 'Handcrafted Ceramic Mug',
-          price: 28.99,
-          images: ['https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=400&fit=crop'],
-          vendor: 'Clay & Dreams',
-          rating: 4.8,
-          reviews: Array(124).fill({}),
-          isOnSale: false,
-        },
-        {
-          _id: '2',
-          name: 'Leather Laptop Bag',
-          price: 89.99,
-          images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop'],
-          vendor: 'Leather Works Co.',
-          rating: 4.9,
-          reviews: Array(89).fill({}),
-          isOnSale: true,
-          originalPrice: 120.00,
-        },
-        // Add more mock products...
-      ];
+      console.error('Error fetching featured products:', error);
+      return [];
     }
   }
 );

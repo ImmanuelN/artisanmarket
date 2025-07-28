@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 import rateLimit from 'express-rate-limit'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import './models/Review.js';
 
 // Load environment variables FIRST
 dotenv.config()
@@ -37,6 +38,12 @@ connectRedis()
 // Create Express app
 const app = express()
 const server = createServer(app)
+
+// CORS middleware (must be before routes)
+app.use(cors({
+  origin: 'http://localhost:5172',
+  credentials: true,
+}));
 
 // Configure Socket.IO
 const io = new Server(server, {

@@ -228,13 +228,79 @@ const VendorDashboard = () => {
       if (response.data.success) {
         showSuccessNotification('Product created successfully!');
         setAddProductModalOpen(false);
-        // Optional: refetch products or add to state
+        // Refetch products
+        if (profile?._id) {
+          fetchVendorProducts(profile._id);
+        }
       } else {
         showErrorNotification(response.data.message || 'Failed to create product.');
       }
     } catch (error) {
       console.error('Create product error:', error);
       showErrorNotification('An error occurred while creating the product.');
+    }
+  };
+
+  const handleUpdateProduct = async (id: string, data: any) => {
+    try {
+      // Transform categories to match the server's format if they haven't been transformed yet
+      const formattedData = {
+        ...data,
+        categories: Array.isArray(data.categories) 
+          ? data.categories.map((c: string) => c.toLowerCase().replace(/\s+/g, '-'))
+          : data.categories
+      };
+
+      const response = await api.put(`/products/${id}`, formattedData);
+      if (response.data.success) {
+        showSuccessNotification('Product updated successfully!');
+        // Refetch products
+        if (profile?._id) {
+          fetchVendorProducts(profile._id);
+        }
+      } else {
+        showErrorNotification(response.data.message || 'Failed to update product.');
+      }
+    } catch (error: any) {
+      console.error('Update product error:', error);
+      showErrorNotification(error.response?.data?.message || 'An error occurred while updating the product.');
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const response = await api.delete(`/products/${id}`);
+      if (response.data.success) {
+        showSuccessNotification('Product deleted successfully!');
+        // Refetch products
+        if (profile?._id) {
+          fetchVendorProducts(profile._id);
+        }
+      } else {
+        showErrorNotification(response.data.message || 'Failed to delete product.');
+      }
+    } catch (error) {
+      console.error('Delete product error:', error);
+      showErrorNotification('An error occurred while deleting the product.');
+    }
+  };
+
+  const handleToggleProductStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const response = await api.patch(`/products/${id}/status`, { status: newStatus });
+      if (response.data.success) {
+        showSuccessNotification(`Product ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+        // Refetch products
+        if (profile?._id) {
+          fetchVendorProducts(profile._id);
+        }
+      } else {
+        showErrorNotification(response.data.message || `Failed to ${newStatus === 'active' ? 'activate' : 'deactivate'} product.`);
+      }
+    } catch (error: any) {
+      console.error('Toggle product status error:', error);
+      showErrorNotification(error.response?.data?.message || 'An error occurred while updating product status.');
     }
   };
 
@@ -600,7 +666,12 @@ const VendorDashboard = () => {
 
               {/* Products Tab */}
               {activeTab === 'products' && (
-                <ProductManagementTab products={vendorProducts} onAddProduct={handleAddProduct} />
+                <ProductManagementTab 
+                  products={vendorProducts} 
+                  onAddProduct={handleAddProduct}
+                  onUpdateProduct={handleUpdateProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                />
               )}
 
               {/* Orders Tab */}

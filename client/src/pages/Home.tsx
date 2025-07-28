@@ -19,15 +19,55 @@ import {
 import { RootState, AppDispatch } from '../store/store';
 import { fetchFeaturedProducts } from '../store/slices/productSlice';
 import { Container, Card, Button, Badge } from '../components/ui';
+import api from '../utils/api';
+
+interface Product {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  images: { url: string }[];
+  vendor: {
+    storeName: string;
+    _id: string;
+  };
+  ratings: {
+    average: number;
+    count: number;
+  };
+  status: string;
+  categories: string[];
+}
 
 const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { featuredProducts } = useSelector((state: RootState) => state.products);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [realFeaturedProducts, setRealFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     dispatch(fetchFeaturedProducts());
+    fetchRealFeaturedProducts();
   }, [dispatch]);
+
+  const fetchRealFeaturedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/products?featured=true&limit=6');
+      if (response.data.success) {
+        setRealFeaturedProducts(response.data.products);
+      }
+    } catch (error) {
+      console.error('Error fetching featured products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to convert kebab-case to title case for display
+  const unformatCategory = (category: string) =>
+    category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
   const heroImages = [
     'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
@@ -35,42 +75,49 @@ const Home = () => {
     'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop'
   ];
 
+  // Updated categories to match Product model enum values
   const categories = [
     {
-      name: 'Ceramics & Pottery',
+      name: 'Ceramics',
       image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
       count: 150,
-      color: 'from-orange-400 to-orange-600'
+      color: 'from-orange-400 to-orange-600',
+      slug: 'ceramics'
     },
     {
-      name: 'Handmade Jewelry',
+      name: 'Jewelry',
       image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
       count: 234,
-      color: 'from-purple-400 to-purple-600'
+      color: 'from-purple-400 to-purple-600',
+      slug: 'jewelry'
     },
     {
-      name: 'Leather Crafts',
+      name: 'Leather Goods',
       image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop',
       count: 89,
-      color: 'from-amber-400 to-amber-600'
+      color: 'from-amber-400 to-amber-600',
+      slug: 'leather-goods'
     },
     {
-      name: 'Textiles & Fabrics',
+      name: 'Textiles',
       image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400&h=300&fit=crop',
       count: 178,
-      color: 'from-emerald-400 to-emerald-600'
+      color: 'from-emerald-400 to-emerald-600',
+      slug: 'textiles'
     },
     {
-      name: 'Wood Crafts',
+      name: 'Woodwork',
       image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
       count: 95,
-      color: 'from-rose-400 to-rose-600'
+      color: 'from-rose-400 to-rose-600',
+      slug: 'woodwork'
     },
     {
-      name: 'Glass Art',
+      name: 'Glass',
       image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=300&fit=crop',
       count: 67,
-      color: 'from-blue-400 to-blue-600'
+      color: 'from-blue-400 to-blue-600',
+      slug: 'glass'
     }
   ];
 
@@ -368,18 +415,36 @@ const Home = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {featuredProducts.slice(0, 6).map((product, index) => (
+            {loading ? (
+              // Loading skeleton
+              [...Array(6)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-300 h-64 rounded-lg mb-4"></div>
+                  <div className="bg-gray-300 h-4 rounded w-3/4 mb-2"></div>
+                  <div className="bg-gray-300 h-4 rounded w-1/2"></div>
+                </div>
+              ))
+            ) : realFeaturedProducts.length === 0 ? (
+              <div className="col-span-full text-center py-16">
+                <div className="text-gray-400 mb-4">
+                  <ShoppingBagIcon className="w-16 h-16 mx-auto" />
+                </div>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">No featured products available</h3>
+                <p className="text-gray-600">Check back later for our curated selection.</p>
+              </div>
+            ) : (
+              realFeaturedProducts.map((product, index) => (
               <motion.div
-                key={product.id}
+                key={product._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <Link to={`/product/${product.id}`}>
+                <Link to={`/product/${product._id}`}>
                   <Card hover className="group overflow-hidden">
                     <div className="relative overflow-hidden">
                       <img
-                        src={product.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop'}
+                        src={product.images[0]?.url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop'}
                         alt={product.title}
                         className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                       />
@@ -409,7 +474,7 @@ const Home = () => {
                       <div className="absolute top-4 right-4 group-hover:hidden">
                         <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-1">
                           <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium text-gray-900">{product.rating}</span>
+                          <span className="text-sm font-medium text-gray-900">{product.ratings.average}</span>
                         </div>
                       </div>
                     </div>
@@ -420,14 +485,14 @@ const Home = () => {
                           <h3 className="font-semibold text-lg text-gray-900 mb-1 group-hover:text-amber-600 transition-colors">
                             {product.title}
                           </h3>
-                          <p className="text-sm text-gray-600">by {product.vendorName}</p>
+                          <p className="text-sm text-gray-600">by {product.vendor.storeName}</p>
                         </div>
                         
                         <div className="flex items-center justify-between">
                           <span className="text-2xl font-bold text-gray-900">${product.price}</span>
                           <div className="flex items-center space-x-1 text-sm text-gray-500">
                             <StarIcon className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span>({product.reviewCount})</span>
+                            <span>({product.ratings.count})</span>
                           </div>
                         </div>
                       </div>
@@ -435,7 +500,8 @@ const Home = () => {
                   </Card>
                 </Link>
               </motion.div>
-            ))}
+            ))
+            )}
           </div>
 
           <motion.div
@@ -481,7 +547,7 @@ const Home = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="group"
               >
-                <Link to={`/shop?category=${category.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                <Link to={`/shop?category=${category.slug}&sort=newest`}>
                   <Card hover className="overflow-hidden">
                     <div className="relative h-64 overflow-hidden">
                       <img
@@ -498,7 +564,6 @@ const Home = () => {
                           transition={{ duration: 0.6, delay: index * 0.1 + 0.3 }}
                         >
                           <h3 className="text-2xl font-bold mb-2">{category.name}</h3>
-                          <p className="text-white/90 mb-4">{category.count} unique items</p>
                           <div className="flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             Explore Collection
                             <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

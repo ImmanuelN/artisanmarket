@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Input, Button, Badge } from '../ui';
-import { PhotoIcon, XCircleIcon, StarIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon, XCircleIcon, StarIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useForm, Controller } from 'react-hook-form';
@@ -16,23 +16,38 @@ interface ProductImage {
 interface ProductData {
   title: string;
   description: string;
-  price: number | string;
+  price: number;
   categories: string[];
   images: ProductImage[];
-  inventoryQuantity: number | string;
+  inventory: {
+    quantity: number;
+  };
 }
 
 interface ProductFormProps {
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
+  onSubmit: (data: ProductData) => void;
+  onCancel?: () => void;
   product?: ProductData | null;
+  initialValues?: ProductData;
+  submitButtonText?: string;
 }
 
 const categories = [
-  'Ceramics', 'Textiles', 'Jewelry', 'Leather Goods', 'Woodwork', 
-  'Metalwork', 'Glass', 'Paintings', 'Sculptures', 'Home Decor', 
+  'Ceramics', 'Textiles', 'Jewelry', 'Leather Goods', 'Woodwork',
+  'Metalwork', 'Glass', 'Paintings', 'Sculptures', 'Home Decor',
   'Accessories', 'Toys', 'Other'
 ];
+
+const formatCategory = (category: string) => {
+  return category.toLowerCase().replace(/\s+/g, '-');
+};
+
+const unformatCategory = (category: string) => {
+  return category
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 const steps = ["Basic Details", "Categorization", "Product Images"];
 
@@ -44,15 +59,17 @@ const schema = yup.object().shape({
     .typeError('Price must be a number')
     .positive('Price must be greater than 0')
     .required('Price is required'),
-  inventoryQuantity: yup
-    .number()
-    .typeError('Inventory quantity must be a number')
-    .integer('Inventory quantity must be an integer')
-    .min(1, 'Inventory quantity must be at least 1')
-    .required('Inventory quantity is required'),
+  inventory: yup.object().shape({
+    quantity: yup
+      .number()
+      .typeError('Inventory quantity must be a number')
+      .integer('Inventory quantity must be an integer')
+      .min(1, 'Inventory quantity must be at least 1')
+      .required('Inventory quantity is required'),
+  }),
   categories: yup
     .array()
-    .of(yup.string())
+    .of(yup.string().required())
     .min(1, 'Select at least one category')
     .required('Category is required'),
   images: yup
@@ -68,7 +85,13 @@ const schema = yup.object().shape({
     .required('Images are required'),
 });
 
-const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product = null }) => {
+const ProductForm: React.FC<ProductFormProps> = ({
+  onSubmit,
+  onCancel = () => {},
+  product = null,
+  initialValues,
+  submitButtonText = 'Save Product'
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [dragActive, setDragActive] = useState(false);
 
@@ -83,13 +106,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
     resolver: yupResolver(schema),
     mode: 'onBlur',
     defaultValues: {
-      title: product?.title || '',
-      description: product?.description || '',
-      price: product?.price || '',
-      categories: product?.categories || [],
-      images: product?.images || [],
-      inventoryQuantity: (product as any)?.inventory?.quantity || 1,
+      title: initialValues?.title || product?.title || '',
+      description: initialValues?.description || product?.description || '',
+      price: Number(initialValues?.price) || Number(product?.price) || 0,
+      categories: (initialValues?.categories || product?.categories || []).map(unformatCategory),
+      images: initialValues?.images || product?.images || [],
+      inventory: {
+        quantity: Number(initialValues?.inventory?.quantity) || Number(product?.inventory?.quantity) || 1,
+      },
     },
+  });
+
+  const onFormSubmit = handleSubmit((data: ProductData) => {
+    // Transform categories to match the server's format
+    const formattedData = {
+      ...data,
+      categories: data.categories.map(formatCategory)
+    };
+    onSubmit(formattedData);
   });
 
   // --- Image Handlers ---
@@ -146,7 +180,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
   // --- Step Navigation ---
   const canProceed = async () => {
     if (currentStep === 1) {
-      return await trigger(['title', 'description', 'price', 'inventoryQuantity']);
+      return await trigger(['title', 'description', 'price', 'inventory.quantity']);
     }
     if (currentStep === 2) {
       return await trigger(['categories']);
@@ -170,19 +204,34 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
 
   // --- Render ---
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* Progress Bar */}
-      <div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+    <form onSubmit={onFormSubmit} className="space-y-8">
+      {/* Progress Steps */}
+      <div className="relative mb-8">
+        <div className="w-full bg-gray-100 rounded-full h-1">
           <div
-            className="bg-amber-600 h-2.5 rounded-full transition-all duration-500"
+            className="bg-amber-600 h-1 rounded-full transition-all duration-500"
             style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
           ></div>
         </div>
-        <div className="flex justify-between mt-2">
+        <div className="flex justify-between mt-4">
           {steps.map((step, index) => (
-            <div key={step} className="text-center">
-              <p className={`text-sm ${index + 1 <= currentStep ? 'text-amber-600 font-semibold' : 'text-gray-500'}`}>{step}</p>
+            <div key={step} className="text-center flex-1">
+              <div className="relative">
+                <div
+                  className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center border-2 transition-colors ${
+                    index + 1 <= currentStep
+                      ? 'border-amber-600 bg-amber-600 text-white'
+                      : 'border-gray-300 bg-white text-gray-500'
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <p className={`mt-2 text-sm ${
+                  index + 1 <= currentStep ? 'text-amber-600 font-semibold' : 'text-gray-500'
+                }`}>
+                  {step}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -195,18 +244,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.3 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-100"
         >
           {/* Step 1: Basic Details */}
           {currentStep === 1 && (
-            <div className="space-y-8 bg-white rounded-xl shadow p-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">{steps[0]}</h3>
+            <div className="p-6 space-y-6">
               <div className="grid md:grid-cols-2 gap-8">
-                <div>
+                <div className="space-y-6">
                   <Controller
                     name="title"
                     control={control}
                     render={({ field }) => (
-                      <div className="mb-4">
+                      <div>
                         <label className="block text-sm font-medium mb-1">Product Name <span className="text-red-500">*</span></label>
                         <Input {...field} className={errors.title ? 'border-red-500' : ''} placeholder="e.g. Modern Ceramic Vase" />
                         {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title.message}</p>}
@@ -217,7 +266,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
                     name="price"
                     control={control}
                     render={({ field }) => (
-                      <div className="mb-4">
+                      <div>
                         <label className="block text-sm font-medium mb-1">Price ($) <span className="text-red-500">*</span></label>
                         <Input {...field} type="number" className={errors.price ? 'border-red-500' : ''} placeholder="e.g. 49.99" />
                         {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price.message}</p>}
@@ -225,13 +274,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
                     )}
                   />
                   <Controller
-                    name="inventoryQuantity"
+                    name="inventory.quantity"
                     control={control}
                     render={({ field }) => (
-                      <div className="mb-4">
+                      <div>
                         <label className="block text-sm font-medium mb-1">Inventory Quantity <span className="text-red-500">*</span></label>
-                        <Input {...field} type="number" min={1} className={errors.inventoryQuantity ? 'border-red-500' : ''} placeholder="e.g. 10" />
-                        {errors.inventoryQuantity && <p className="text-xs text-red-500 mt-1">{errors.inventoryQuantity.message}</p>}
+                        <Input {...field} type="number" min={1} className={errors.inventory?.quantity ? 'border-red-500' : ''} placeholder="e.g. 10" />
+                        {errors.inventory?.quantity && <p className="text-xs text-red-500 mt-1">{errors.inventory.quantity.message}</p>}
                       </div>
                     )}
                   />
@@ -241,9 +290,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
                     name="description"
                     control={control}
                     render={({ field }) => (
-                      <div className="mb-4 h-full flex flex-col">
+                      <div className="h-full flex flex-col">
                         <label className="block text-sm font-medium mb-1">Description <span className="text-red-500">*</span></label>
-                        <textarea {...field} rows={7} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${errors.description ? 'border-red-500' : ''}`} placeholder="Describe your product..." />
+                        <textarea
+                          {...field}
+                          rows={7}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none ${
+                            errors.description ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="Describe your product in detail..."
+                        />
                         {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
                       </div>
                     )}
@@ -253,36 +309,38 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
             </div>
           )}
 
-          {/* Step 2: Categorization */}
+          {/* Categories Section */}
           {currentStep === 2 && (
-            <div className="space-y-8 bg-white rounded-xl shadow p-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">{steps[1]}</h3>
+            <div className="p-6 space-y-6">
               <Controller
                 name="categories"
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <label className="block text-sm font-medium mb-1">Category <span className="text-red-500">*</span></label>
-                    <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
+                    <label className="block text-sm font-medium mb-2">Categories <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-lg">
                       {categories.map((cat) => (
-                        <Badge
+                        <div
                           key={cat}
-                          variant={field.value.includes(cat) ? 'primary' : 'outline'}
                           onClick={() => {
-                            if (field.value.includes(cat)) {
-                              field.onChange(field.value.filter((c: string) => c !== cat));
+                            const formattedCat = cat;
+                            if (field.value.includes(formattedCat)) {
+                              field.onChange(field.value.filter((c: string) => c !== formattedCat));
                             } else {
-                              field.onChange([...field.value, cat]);
+                              field.onChange([...field.value, formattedCat]);
                             }
                           }}
-                          className={`cursor-pointer transition-transform transform hover:scale-105 ${errors.categories ? 'border-red-500' : ''}`}
-                          size="lg"
+                          className={`cursor-pointer p-3 rounded-lg text-sm font-medium text-center transition-all ${
+                            field.value.includes(cat)
+                              ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-500'
+                              : 'bg-white text-gray-600 hover:bg-gray-100'
+                          }`}
                         >
                           {cat}
-                        </Badge>
+                        </div>
                       ))}
                     </div>
-                    {errors.categories && <p className="text-xs text-red-500 mt-1">{errors.categories.message}</p>}
+                    {errors.categories && <p className="text-xs text-red-500 mt-2">{errors.categories.message}</p>}
                   </div>
                 )}
               />
@@ -291,22 +349,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
 
           {/* Step 3: Product Images */}
           {currentStep === 3 && (
-            <div className="space-y-8 bg-white rounded-xl shadow p-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">{steps[2]}</h3>
+            <div className="p-6 space-y-6">
               <Controller
                 name="images"
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <label className="block text-sm font-medium mb-1">Product Images <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium mb-2">Product Images <span className="text-red-500">*</span></label>
                     <div
-                      className={`w-full p-6 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors ${dragActive ? 'border-amber-500 bg-amber-50' : 'border-gray-300 bg-gray-50'}`}
+                      className={`w-full p-8 border-2 border-dashed rounded-lg flex flex-col items-center justify-center transition-colors ${
+                        dragActive ? 'border-amber-500 bg-amber-50' : 'border-gray-300 bg-gray-50'
+                      }`}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                     >
-                      <PhotoIcon className="w-10 h-10 text-gray-400 mb-2" />
-                      <p className="text-gray-600 mb-2">Drag and drop images here, or</p>
+                      <PhotoIcon className="w-12 h-12 text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-2 text-center">
+                        Drag and drop your product images here, or
+                      </p>
                       <input
                         type="file"
                         accept="image/*"
@@ -324,15 +385,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
                       >
                         {field.value.length >= 10 ? 'Max 10 Images' : 'Upload Images'}
                       </Button>
-                      <p className="text-xs text-gray-500 mt-2">Minimum 3, maximum 10 images. The first image is the cover.</p>
+                      <p className="text-xs text-gray-500 mt-2">Minimum 3, maximum 10 images. The first image will be the cover.</p>
                     </div>
-                    {errors.images && <p className="text-xs text-red-500 mt-1">{errors.images.message}</p>}
+                    {errors.images && <p className="text-xs text-red-500 mt-2">{errors.images.message}</p>}
+
                     {field.value.length > 0 && (
                       <DragDropContext onDragEnd={onDragEnd}>
                         <Droppable droppableId="images-droppable" direction="horizontal">
                           {(provided, snapshot) => (
                             <div
-                              className="flex gap-4 mt-4 overflow-x-auto"
+                              className="flex gap-4 mt-6 pb-4 overflow-x-auto"
                               {...provided.droppableProps}
                               ref={provided.innerRef}
                             >
@@ -343,24 +405,33 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
-                                      className={`relative flex flex-col items-center border rounded-lg p-2 bg-white shadow-sm ${index === 0 ? 'border-amber-500 border-2' : 'border-gray-200'} ${snapshot.isDragging ? 'ring-2 ring-amber-400' : ''}`}
-                                      style={{ minWidth: 96, minHeight: 96 }}
+                                      className={`relative flex flex-col items-center p-2 bg-white rounded-lg ${
+                                        index === 0 ? 'ring-2 ring-amber-500' : 'border border-gray-200'
+                                      } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                                      style={{ width: 120, ...provided.draggableProps.style }}
                                     >
-                                      <img src={image.url || ''} alt={image.alt || `Product image ${index + 1}`} className="object-cover w-24 h-24 rounded mb-2" />
+                                      <img
+                                        src={image.url}
+                                        alt={image.alt || `Product image ${index + 1}`}
+                                        className="w-full h-24 object-cover rounded-md mb-2"
+                                      />
                                       <Button
                                         type="button"
-                                        size="sm"
                                         variant="destructive"
+                                        size="sm"
                                         onClick={() => {
                                           const newImages = [...field.value];
                                           newImages.splice(index, 1);
                                           field.onChange(newImages.map((img, idx) => ({ ...img, isPrimary: idx === 0 })));
                                         }}
+                                        className="!p-1"
                                       >
-                                        <XCircleIcon className="w-5 h-5" />
+                                        <TrashIcon className="w-4 h-4" />
                                       </Button>
                                       {index === 0 && (
-                                        <span className="absolute top-1 left-1 flex items-center text-amber-600 font-semibold text-xs bg-white bg-opacity-80 px-1 rounded"><StarIcon className="w-4 h-4 mr-1" /> Cover</span>
+                                        <span className="absolute -top-2 -left-2 flex items-center bg-amber-500 text-white text-xs px-2 py-1 rounded-full">
+                                          Cover
+                                        </span>
                                       )}
                                     </div>
                                   )}
@@ -381,19 +452,27 @@ const ProductForm: React.FC<ProductFormProps> = ({ onSubmit, onCancel, product =
       </AnimatePresence>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between gap-3 pt-4 border-t border-gray-200">
+      <div className="flex justify-between gap-3 pt-6">
         <div>
           {currentStep > 1 && (
-            <Button type="button" variant="outline" onClick={prevStep}>Back</Button>
+            <Button type="button" variant="outline" onClick={prevStep}>
+              Back
+            </Button>
           )}
         </div>
-        <div>
-          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <div className="flex gap-3">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
           {currentStep < steps.length && (
-            <Button type="button" onClick={nextStep} className="ml-3">Next</Button>
+            <Button type="button" onClick={nextStep}>
+              Next
+            </Button>
           )}
           {currentStep === steps.length && (
-            <Button type="submit" className="ml-3">Save Product</Button>
+            <Button type="submit" variant="primary">
+              {submitButtonText}
+            </Button>
           )}
         </div>
       </div>

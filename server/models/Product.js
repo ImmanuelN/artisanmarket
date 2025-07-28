@@ -201,13 +201,20 @@ const productSchema = new mongoose.Schema({
 
 // Indexes for better performance
 productSchema.index({ vendor: 1 })
-productSchema.index({ category: 1 })
+productSchema.index({ categories: 1 })
 productSchema.index({ status: 1 })
 productSchema.index({ featured: 1 })
 productSchema.index({ 'ratings.average': -1 })
 productSchema.index({ price: 1 })
 productSchema.index({ createdAt: -1 })
+// Text search index for product content
 productSchema.index({ title: 'text', description: 'text', tags: 'text' })
+
+// Individual indexes for regex searches
+productSchema.index({ title: 1 })
+productSchema.index({ description: 1 })
+productSchema.index({ tags: 1 })
+productSchema.index({ vendor: 1 }) // Index for vendor reference
 
 // Generate slug before saving
 productSchema.pre('save', function(next) {
