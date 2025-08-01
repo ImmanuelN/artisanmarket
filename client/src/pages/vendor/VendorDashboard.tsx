@@ -29,7 +29,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
-import { Container, Card, Button, Badge, Input } from '../../components/ui'
+import { Container, Card, Button, Badge, Input, Modal } from '../../components/ui'
 import { setVendorProfile, setVendorStats, setVendorOrders, setLoading, setError } from '../../store/slices/vendorSlice'
 import api from '../../utils/api'
 import { Store } from '../../types/stores';
@@ -38,7 +38,6 @@ import StoreLogo from '../../components/ui/StoreLogo';
 import StoreBanner from '../../components/ui/StoreBanner';
 import ImageKit from "imagekit-javascript";
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
-import Modal from '../../components/ui/Modal';
 import ProductForm from '../../components/forms/ProductForm';
 import DashboardNavigation from '../../components/layout/DashboardNavigation';
 import ProductManagementTab from './tabs/ProductManagementTab';
@@ -61,6 +60,21 @@ const VendorDashboard = () => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [vendorBalance, setVendorBalance] = useState<any>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [ordersPagination, setOrdersPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalOrders: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productsPagination, setProductsPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
   const [deliveryProofModal, setDeliveryProofModal] = useState<{
     isOpen: boolean;
     orderId: string | null;
@@ -69,6 +83,15 @@ const VendorDashboard = () => {
     isOpen: false,
     orderId: null,
     orderNumber: null
+  });
+  const [imageModal, setImageModal] = useState<{
+    isOpen: boolean;
+    imageUrl: string | null;
+    title: string;
+  }>({
+    isOpen: false,
+    imageUrl: null,
+    title: ''
   });
   const [deliveryProofForm, setDeliveryProofForm] = useState({
     image: null as File | null,
@@ -113,12 +136,13 @@ const VendorDashboard = () => {
     }
   }
 
-  const fetchVendorOrders = async () => {
+  const fetchVendorOrders = async (page = 1) => {
     try {
       setOrdersLoading(true);
-      const response = await api.get('/orders/vendor/orders')
+      const response = await api.get(`/vendors/orders?page=${page}&limit=10`)
       if (response.data.success) {
         dispatch(setVendorOrders(response.data.orders))
+        setOrdersPagination(response.data.pagination)
       }
     } catch (error) {
       console.error('Error fetching vendor orders:', error)
@@ -142,12 +166,13 @@ const VendorDashboard = () => {
     }
   };
 
-  const fetchVendorOrdersWithFilter = async (status: string) => {
+  const fetchVendorOrdersWithFilter = async (status: string, page = 1) => {
     try {
       setOrdersLoading(true);
-      const response = await api.get(`/orders/vendor/orders?status=${status}`)
+      const response = await api.get(`/vendors/orders?status=${status}&page=${page}&limit=10`)
       if (response.data.success) {
         dispatch(setVendorOrders(response.data.orders))
+        setOrdersPagination(response.data.pagination)
       }
     } catch (error) {
       console.error('Error fetching vendor orders:', error)
@@ -224,7 +249,7 @@ const VendorDashboard = () => {
 
             try {
               // Submit delivery proof to backend
-              const response = await api.post(`/vendor/orders/${orderId}/delivery-proof`, {
+              const response = await api.post(`/vendors/orders/${orderId}/delivery-proof`, {
                 imageUrl: result.url,
                 imageId: result.fileId,
                 deliveryNotes: formData.deliveryNotes,
@@ -280,14 +305,30 @@ const VendorDashboard = () => {
     }
   };
 
-  const fetchVendorProducts = async (vendorId: string) => {
+  const fetchVendorProducts = async (vendorId: string, page = 1) => {
     try {
-      const response = await api.get(`/products?vendor=${vendorId}`);
+      setProductsLoading(true);
+      const response = await api.get(`/products?vendor=${vendorId}&page=${page}&limit=12`);
       if (response.data.success) {
         setVendorProducts(response.data.products);
+        setProductsPagination(response.data.pagination || {
+          currentPage: page,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false
+        });
       }
     } catch (error) {
       console.error('Error fetching vendor products:', error);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  const handleProductPageChange = (page: number) => {
+    if (profile?._id) {
+      setProductsPage(page);
+      fetchVendorProducts(profile._id, page);
     }
   };
 
@@ -320,7 +361,7 @@ const VendorDashboard = () => {
   useEffect(() => {
     if (profile && profile._id && user?.role === 'vendor') {
       // 1. Fetch the initial product list
-      fetchVendorProducts(profile._id);
+      fetchVendorProducts(profile._id, 1);
 
       // 2. Set up real-time updates with error handling
       let socket: any = null;
@@ -428,7 +469,7 @@ const VendorDashboard = () => {
         setAddProductModalOpen(false);
         // Refetch products
         if (profile?._id) {
-          fetchVendorProducts(profile._id);
+          fetchVendorProducts(profile._id, 1);
         }
       } else {
         showErrorNotification(response.data.message || 'Failed to create product.');
@@ -454,7 +495,7 @@ const VendorDashboard = () => {
         showSuccessNotification('Product updated successfully!');
         // Refetch products
         if (profile?._id) {
-          fetchVendorProducts(profile._id);
+          fetchVendorProducts(profile._id, 1);
         }
       } else {
         showErrorNotification(response.data.message || 'Failed to update product.');
@@ -472,7 +513,7 @@ const VendorDashboard = () => {
         showSuccessNotification('Product deleted successfully!');
         // Refetch products
         if (profile?._id) {
-          fetchVendorProducts(profile._id);
+          fetchVendorProducts(profile._id, 1);
         }
       } else {
         showErrorNotification(response.data.message || 'Failed to delete product.');
@@ -491,7 +532,7 @@ const VendorDashboard = () => {
         showSuccessNotification(`Product ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
         // Refetch products
         if (profile?._id) {
-          fetchVendorProducts(profile._id);
+          fetchVendorProducts(profile._id, 1);
         }
       } else {
         showErrorNotification(response.data.message || `Failed to ${newStatus === 'active' ? 'activate' : 'deactivate'} product.`);
@@ -788,7 +829,12 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentOrders && currentOrders.length > 0 ? currentOrders.slice(0, 3).map((order, index) => {
+                          {ordersLoading ? (
+                            <div className="text-center py-8">
+                              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600 mx-auto mb-3"></div>
+                              <p className="text-sm text-gray-600">Loading recent orders...</p>
+                            </div>
+                          ) : currentOrders && currentOrders.length > 0 ? currentOrders.slice(0, 3).map((order, index) => {
                             const StatusIcon = getStatusIcon(order.status)
                             return (
                               <div key={order._id || order.id || `order-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -842,7 +888,11 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentStats?.topProducts && currentStats.topProducts.length > 0 ? currentStats.topProducts.map((product, index) => (
+                          {loading ? (
+                            <div className="flex justify-center py-8">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+                            </div>
+                          ) : currentStats?.topProducts && currentStats.topProducts.length > 0 ? currentStats.topProducts.map((product, index) => (
                             <div key={product.id || `product-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -877,6 +927,9 @@ const VendorDashboard = () => {
                   onAddProduct={handleAddProduct}
                   onUpdateProduct={handleUpdateProduct}
                   onDeleteProduct={handleDeleteProduct}
+                  loading={productsLoading}
+                  pagination={productsPagination}
+                  onPageChange={handleProductPageChange}
                 />
               )}
 
@@ -891,9 +944,9 @@ const VendorDashboard = () => {
                         onChange={(e) => {
                           const status = e.target.value;
                           if (status === 'all') {
-                            fetchVendorOrders();
+                            fetchVendorOrders(1);
                           } else {
-                            fetchVendorOrdersWithFilter(status);
+                            fetchVendorOrdersWithFilter(status, 1);
                           }
                         }}
                       >
@@ -1044,28 +1097,77 @@ const VendorDashboard = () => {
 
                                        {/* Show if proof was uploaded and allow re-upload within 15 minutes */}
                                        {order.deliveryProof && (
-                                         <div className="flex items-center gap-2">
-                                           <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-md">
-                                             <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                                             <span className="text-sm text-green-700">
-                                               Arrival proof uploaded
-                                             </span>
+                                         <div className="w-full">
+                                           <div className="flex items-center gap-2 mb-2">
+                                             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-md flex-1">
+                                               <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                                               <div className="flex-1">
+                                                 <span className="text-sm font-medium text-green-800 block">
+                                                   Arrival Proof Uploaded
+                                                 </span>
+                                                 <span className="text-xs text-green-600">
+                                                   {new Date(order.deliveryProof?.createdAt || order.deliveryProof?.uploadedAt || order.updatedAt).toLocaleString()}
+                                                 </span>
+                                               </div>
+                                             </div>
                                            </div>
-                                           {/* Allow re-upload within 15 minutes */}
-                                           {new Date().getTime() - new Date(order.deliveryProof.uploadedAt || order.updatedAt).getTime() < 15 * 60 * 1000 && (
+                                           
+                                           <div className="flex flex-wrap gap-2">
+                                             {/* Re-upload button - only available within 15 minutes */}
+                                             {(() => {
+                                               // Use createdAt as fallback since uploadedAt might not be available
+                                               const uploadTime = new Date(order.deliveryProof?.createdAt || order.deliveryProof?.uploadedAt || order.updatedAt).getTime();
+                                               const now = new Date().getTime();
+                                               const timeDiffMinutes = (now - uploadTime) / (1000 * 60);
+                                               const canReupload = timeDiffMinutes < 15;
+                                               
+                                               console.log('Upload time:', new Date(uploadTime), 'Now:', new Date(now), 'Diff minutes:', timeDiffMinutes, 'Can reupload:', canReupload);
+                                               
+                                               return canReupload ? (
+                                                 <Button 
+                                                   size="sm" 
+                                                   variant="outline"
+                                                   onClick={() => setDeliveryProofModal({
+                                                     isOpen: true,
+                                                     orderId: order._id,
+                                                     orderNumber: order.orderNumber
+                                                   })}
+                                                   className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                                                 >
+                                                   <CameraIcon className="w-4 h-4 mr-1" />
+                                                   Re-upload ({Math.ceil(15 - timeDiffMinutes)}m left)
+                                                 </Button>
+                                               ) : (
+                                                 <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded border">
+                                                   Re-upload disabled (15 min window expired)
+                                                 </div>
+                                               );
+                                             })()}
+                                             
+                                             {/* View proof button */}
                                              <Button 
                                                size="sm" 
                                                variant="outline"
-                                               onClick={() => setDeliveryProofModal({
-                                                 isOpen: true,
-                                                 orderId: order._id,
-                                                 orderNumber: order.orderNumber
-                                               })}
+                                               onClick={() => {
+                                                 if (order.deliveryProof?.imageUrl) {
+                                                   setImageModal({
+                                                     isOpen: true,
+                                                     imageUrl: order.deliveryProof.imageUrl,
+                                                     title: `Delivery Proof - Order #${order.orderNumber}`
+                                                   });
+                                                 }
+                                               }}
+                                               className="border-gray-300 text-gray-700 hover:bg-gray-50"
                                              >
-                                               <CameraIcon className="w-4 h-4 mr-1" />
-                                               Re-upload
+                                               <EyeIcon className="w-4 h-4 mr-1" />
+                                               View Proof
                                              </Button>
-                                           )}
+                                           </div>
+                                           
+                                           {/* Information note */}
+                                           <div className="mt-2 px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                                             <strong>Note:</strong> Re-uploading is only allowed within 15 minutes of the original upload.
+                                           </div>
                                          </div>
                                        )}
 
@@ -1073,7 +1175,7 @@ const VendorDashboard = () => {
                                        <div className="w-full mt-2 px-3 py-2 bg-amber-50 rounded-md">
                                          <p className="text-xs text-amber-700">
                                            <strong>Note:</strong> Upload arrival proof when items reach the processing center. 
-                                           This will change status to "processing" for warehouse team review.
+                                           The proof will be recorded for order tracking and review.
                                          </p>
                                        </div>
                                      </div>
@@ -1090,6 +1192,36 @@ const VendorDashboard = () => {
                           </div>
                         )}
                       </div>
+                      
+                      {/* Pagination Controls */}
+                      {ordersPagination.totalPages > 1 && (
+                        <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
+                          <div className="flex items-center text-sm text-gray-700">
+                            <span>
+                              Showing page {ordersPagination.currentPage} of {ordersPagination.totalPages} 
+                              ({ordersPagination.totalOrders} total orders)
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => fetchVendorOrders(ordersPagination.currentPage - 1)}
+                              disabled={!ordersPagination.hasPrevPage || ordersLoading}
+                            >
+                              Previous
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => fetchVendorOrders(ordersPagination.currentPage + 1)}
+                              disabled={!ordersPagination.hasNextPage || ordersLoading}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </Card.Content>
                   </Card>
                 </div>
@@ -1493,6 +1625,23 @@ const VendorDashboard = () => {
           </Button>
         </div>
       )}
+
+      {/* Image Modal for viewing delivery proof */}
+      <Modal
+        isOpen={imageModal.isOpen}
+        onClose={() => setImageModal({ isOpen: false, imageUrl: null, title: '' })}
+        title={imageModal.title}
+        size="3xl"
+      >
+        <div className="flex justify-center">
+          <img
+            src={imageModal.imageUrl || ''}
+            alt="Delivery proof"
+            className="max-w-full max-h-96 object-contain rounded-lg shadow-lg"
+          />
+        </div>
+      </Modal>
+
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -1556,7 +1705,7 @@ const VendorDashboard = () => {
                 <p className="text-sm font-medium text-amber-800">Important</p>
                 <p className="text-sm text-amber-700">
                   Upload a clear photo showing the items have arrived at the processing center/warehouse. 
-                  This will change the order status to "processing" for the warehouse team to handle.
+                  This will record the arrival proof for order tracking and review.
                 </p>
               </div>
             </div>
@@ -1566,34 +1715,97 @@ const VendorDashboard = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Arrival Photo *
             </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+            <div 
+              className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-amber-400 transition-colors"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('border-amber-400', 'bg-amber-50');
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('border-amber-400', 'bg-amber-50');
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('border-amber-400', 'bg-amber-50');
+                const files = Array.from(e.dataTransfer.files);
+                const imageFile = files.find(file => file.type.startsWith('image/'));
+                if (imageFile) {
+                  setDeliveryProofForm(prev => ({ ...prev, image: imageFile }));
+                }
+              }}
+            >
               <div className="space-y-1 text-center">
                 {deliveryProofForm.image ? (
-                  <div className="space-y-2">
-                    <img 
-                      src={URL.createObjectURL(deliveryProofForm.image)} 
-                      alt="Arrival proof preview" 
-                      className="mx-auto h-32 w-auto rounded-lg"
-                    />
-                    <p className="text-sm text-gray-600">{deliveryProofForm.image.name}</p>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setDeliveryProofForm(prev => ({ ...prev, image: null }))}
-                    >
-                      Remove
-                    </Button>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <img 
+                        src={URL.createObjectURL(deliveryProofForm.image)} 
+                        alt="Arrival proof preview" 
+                        className="mx-auto h-40 w-auto rounded-lg border-2 border-green-200 shadow-md"
+                      />
+                      <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center justify-center mb-2">
+                        <CheckCircleIcon className="w-5 h-5 text-green-600 mr-2" />
+                        <span className="text-sm font-medium text-green-800">Image Selected Successfully</span>
+                      </div>
+                      <p className="text-sm text-green-700 mb-1">{deliveryProofForm.image.name}</p>
+                      <p className="text-xs text-green-600">
+                        Size: {(deliveryProofForm.image.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="arrival-photo-replace"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setDeliveryProofForm(prev => ({ ...prev, image: file }));
+                          }
+                          // Reset the input value so the same file can be selected again
+                          e.target.value = '';
+                        }}
+                      />
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => document.getElementById('arrival-photo-replace')?.click()}
+                        className="flex items-center gap-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+                      >
+                        <PhotoIcon className="w-4 h-4" />
+                        Replace Image
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setDeliveryProofForm(prev => ({ ...prev, image: null }))}
+                        className="flex items-center gap-1 border-red-300 text-red-700 hover:bg-red-50"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <>
                     <CameraIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="flex text-sm text-gray-600">
-                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500">
-                        <span>Upload a photo</span>
-                        <input 
-                          type="file" 
-                          className="sr-only" 
+                    <div className="text-sm text-gray-600">
+                      <p className="mb-3">Drop an image here, or choose an option below</p>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <input
+                          type="file"
                           accept="image/*"
+                          id="arrival-photo-upload"
+                          className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -1601,10 +1813,40 @@ const VendorDashboard = () => {
                             }
                           }}
                         />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => document.getElementById('arrival-photo-upload')?.click()}
+                          className="flex items-center gap-1"
+                        >
+                          <PhotoIcon className="w-4 h-4" />
+                          Upload File
+                        </Button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          id="arrival-photo-camera"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setDeliveryProofForm(prev => ({ ...prev, image: file }));
+                            }
+                          }}
+                        />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => document.getElementById('arrival-photo-camera')?.click()}
+                          className="flex items-center gap-1"
+                        >
+                          <CameraIcon className="w-4 h-4" />
+                          Take Photo
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
                   </>
                 )}
               </div>

@@ -34,6 +34,7 @@ import bankRoutes from './routes/bankRoutes.js'
 import vendorBalanceRoutes from './routes/vendorBalanceRoutes.js'
 import customerBalanceRoutes from './routes/customerBalanceRoutes.js'
 import customerRoutes from './routes/customerRoutes.js'
+import deliveryProofRoutes from './routes/deliveryProofRoutes.js'
 import mockApiRoutes from './routes/mockApi.js'
 
 // Import middleware
@@ -43,6 +44,28 @@ import { notFound } from './middleware/notFound.js'
 // Connect to databases
 connectDB()
 connectRedis()
+
+// MongoDB connection event listeners
+mongoose.connection.on('connected', () => {
+  console.log('🗄️ MongoDB: Connected successfully')
+})
+
+mongoose.connection.on('error', (err) => {
+  console.error('🗄️ MongoDB: Connection error:', err)
+})
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('🗄️ MongoDB: Disconnected - attempting to reconnect...')
+})
+
+mongoose.connection.on('reconnected', () => {
+  console.log('🗄️ MongoDB: Reconnected successfully')
+})
+
+// Handle MongoDB connection issues gracefully
+mongoose.connection.on('close', () => {
+  console.warn('🗄️ MongoDB: Connection closed')
+})
 
 // Initialize Plaid configuration
 console.log('🔗 Initializing Plaid configuration...')
@@ -160,13 +183,44 @@ const limiter = rateLimit({
 })
 app.use('/api/', limiter)
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5172",
+// CORS configuration with debugging
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.CLIENT_URL || "http://localhost:5172",
+      "http://localhost:5172",
+      "http://localhost:3000", // Common React dev port
+      "http://127.0.0.1:5172",
+      "http://127.0.0.1:3000"
+    ]
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log(`✅ CORS: Allowing origin ${origin}`)
+      callback(null, true)
+    } else {
+      console.error(`❌ CORS: Blocking origin ${origin}`)
+      console.log(`   Allowed origins: ${allowedOrigins.join(', ')}`)
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}))
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+}
+
+app.use(cors(corsOptions))
+
+// Additional CORS debugging middleware
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    console.log(`🔄 CORS Preflight: ${req.method} ${req.path} from ${req.get('Origin')}`)
+  }
+  next()
+})
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }))
@@ -185,13 +239,72 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'))
 }
 
-// Health check endpoint
+// Request tracking middleware
+app.use((req, res, next) => {
+  const start = Date.now()
+  const reqId = Math.random().toString(36).substring(7)
+  
+  console.log(`📡 [${reqId}] ${req.method} ${req.path}`)
+  
+  // Track response time and status
+  res.on('finish', () => {
+    const duration = Date.now() - start
+    const status = res.statusCode
+    const color = status >= 400 ? '❌' : status >= 300 ? '⚠️' : '✅'
+    
+    console.log(`${color} [${reqId}] ${status} ${req.method} ${req.path} - ${duration}ms`)
+    
+    // Warn about slow requests
+    if (duration > 5000) {
+      console.warn(`🐌 [${reqId}] SLOW REQUEST: ${duration}ms for ${req.method} ${req.path}`)
+    }
+  })
+  
+  // Detect hanging requests
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error(`🕐 [${reqId}] REQUEST TIMEOUT: ${req.method} ${req.path} - taking longer than 30s`)
+    }
+  }, 30000)
+  
+  res.on('finish', () => clearTimeout(timeout))
+  res.on('close', () => clearTimeout(timeout))
+  
+  next()
+})
+
+// Health check endpoint with detailed diagnostics
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  const healthData = {
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+      external: Math.round(process.memoryUsage().external / 1024 / 1024)
+    },
+    database: {
+      mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      connectionName: mongoose.connection.name
+    },
+    services: {
+      plaid: plaidStatus,
+      stripe: stripeStatus
+    }
+  }
+  
+  console.log('🩺 Health check requested:', healthData)
+  res.status(200).json(healthData)
+})
+
+// Add a test endpoint to verify server is responding
+app.get('/ping', (req, res) => {
+  res.status(200).json({ 
+    message: 'pong', 
+    timestamp: new Date().toISOString(),
+    server: 'artisan-market-api'
   })
 })
 
@@ -209,24 +322,55 @@ app.use('/api/bank', bankRoutes)
 app.use('/api/vendor-balance', vendorBalanceRoutes)
 app.use('/api/customer-balance', customerBalanceRoutes)
 app.use('/api/customers', customerRoutes)
+app.use('/api/delivery-proof', deliveryProofRoutes)
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id)
+  console.log('🔌 User connected:', socket.id)
 
   // Join vendor room for real-time notifications
   socket.on('join-vendor-room', (vendorId) => {
     socket.join(`vendor-${vendorId}`)
-    console.log(`Vendor ${vendorId} joined room`)
+    console.log(`🏪 Vendor ${vendorId} joined room`)
   })
 
   // Handle order updates
   socket.on('order-update', (orderData) => {
     socket.to(`vendor-${orderData.vendorId}`).emit('new-order', orderData)
+    console.log(`📦 Order update sent to vendor ${orderData.vendorId}`)
   })
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id)
+  socket.on('disconnect', (reason) => {
+    console.log('🔌 User disconnected:', socket.id, 'Reason:', reason)
+  })
+
+  socket.on('error', (error) => {
+    console.error('🔌 Socket.IO error:', error)
+  })
+})
+
+// Catch-all route for undefined API endpoints
+app.all('/api/*', (req, res) => {
+  console.warn(`⚠️ Undefined API endpoint accessed: ${req.method} ${req.path}`)
+  res.status(404).json({
+    success: false,
+    message: `API endpoint not found: ${req.method} ${req.path}`,
+    availableEndpoints: [
+      '/api/auth',
+      '/api/products', 
+      '/api/users',
+      '/api/vendors',
+      '/api/orders',
+      '/api/admin',
+      '/api/upload',
+      '/api/payments',
+      '/api/vendor-bank',
+      '/api/bank',
+      '/api/vendor-balance',
+      '/api/customer-balance',
+      '/api/customers',
+      '/api/delivery-proof'
+    ]
   })
 })
 
@@ -236,6 +380,41 @@ app.use(errorHandler)
 
 // Start server
 const PORT = process.env.PORT || 5000
+
+// Add comprehensive error handling
+process.on('uncaughtException', (error) => {
+  console.error('💥 UNCAUGHT EXCEPTION! Shutting down...')
+  console.error('Error name:', error.name)
+  console.error('Error message:', error.message)
+  console.error('Stack trace:', error.stack)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION! Shutting down...')
+  console.error('Unhandled Rejection at:', promise)
+  console.error('Reason:', reason)
+  server.close(() => {
+    process.exit(1)
+  })
+})
+
+// Monitor server health
+setInterval(() => {
+  const memUsage = process.memoryUsage()
+  const uptime = process.uptime()
+  
+  console.log(`🔄 Server Health Check - Uptime: ${Math.floor(uptime/60)}m, Memory: ${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`)
+  
+  // Log connection states
+  console.log(`   📊 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected'}`)
+  
+  // Check if memory usage is too high (above 500MB)
+  if (memUsage.heapUsed > 500 * 1024 * 1024) {
+    console.warn('⚠️ High memory usage detected:', Math.round(memUsage.heapUsed / 1024 / 1024) + 'MB')
+  }
+}, 5 * 60 * 1000) // Every 5 minutes
+
 server.listen(PORT, () => {
   console.log('')
   console.log('🎉 ArtisanMarket Server Started Successfully!')

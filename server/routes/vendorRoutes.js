@@ -1,6 +1,7 @@
 import express from 'express'
 import Vendor from '../models/Vendor.js'
 import User from '../models/User.js'
+import DeliveryProof from '../models/DeliveryProof.js'
 import jwt from 'jsonwebtoken'
 
 const router = express.Router()
@@ -211,28 +212,42 @@ router.get('/orders', requireAuth, async (req, res) => {
 
     const Order = (await import('../models/Order.js')).default;
     
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
     let query = { 'items.vendor': vendor._id };
     
     if (status && status !== 'all') {
       query.status = status;
     }
     
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const totalOrders = await Order.countDocuments(query);
+    
     const orders = await Order.find(query)
       .populate('customer', 'name email')
       .populate('items.product', 'title images price')
       .populate('deliveryProof')
       .sort({ createdAt: -1 })
-      .limit(50);
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    res.json({ success: true, orders });
+    res.json({ 
+      success: true, 
+      orders,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalOrders / parseInt(limit)),
+        totalOrders,
+        hasNextPage: skip + orders.length < totalOrders,
+        hasPrevPage: parseInt(page) > 1
+      }
+    });
   } catch (err) {
     console.error('Vendor orders error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// POST /orders/:orderId/delivery-proof - upload arrival proof (changes pending to processing)
+// POST /orders/:orderId/delivery-proof - upload arrival proof (keeps order as pending)
 router.post('/orders/:orderId/delivery-proof', requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -309,9 +324,15 @@ router.post('/orders/:orderId/delivery-proof', requireAuth, async (req, res) => 
 
       await deliveryProof.save();
 
-      // Update order with delivery proof and change status to processing
+      // Update order with delivery proof (keep status as pending)
       order.deliveryProof = deliveryProof._id;
-      order.status = 'processing'; // Change from pending to processing
+      // Status remains 'pending' - no automatic change to processing
+      
+      // Ensure escrowAmount is set if missing (for backward compatibility)
+      if (!order.escrowAmount) {
+        order.escrowAmount = order.total;
+      }
+      
       await order.save();
 
       res.json({ 

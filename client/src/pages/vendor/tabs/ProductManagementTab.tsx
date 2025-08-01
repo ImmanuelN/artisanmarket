@@ -22,13 +22,24 @@ interface ProductManagementTabProps {
   products: Product[];
   onUpdateProduct: (id: string, data: Partial<Product>) => Promise<void>;
   onDeleteProduct: (id: string) => Promise<void>;
+  loading?: boolean;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+  onPageChange?: (page: number) => void;
 }
 
 const ProductManagementTab: React.FC<ProductManagementTabProps> = ({
   onAddProduct,
   products,
   onUpdateProduct,
-  onDeleteProduct
+  onDeleteProduct,
+  loading = false,
+  pagination,
+  onPageChange
 }) => {
   const navigate = useNavigate();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -75,13 +86,21 @@ const ProductManagementTab: React.FC<ProductManagementTabProps> = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">My Products</h2>
-        <Button onClick={onAddProduct}>
+        <Button onClick={onAddProduct} disabled={loading}>
           <PlusIcon className="w-5 h-5 mr-2" />
           Add New Product
         </Button>
       </div>
 
-      {products.length === 0 ? (
+      {loading ? (
+        <Card>
+          <Card.Content>
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+            </div>
+          </Card.Content>
+        </Card>
+      ) : products.length === 0 ? (
         <Card>
           <Card.Content>
             <div className="text-center py-12">
@@ -96,7 +115,8 @@ const ProductManagementTab: React.FC<ProductManagementTabProps> = ({
           </Card.Content>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+        <div>
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
           {products.map((product) => (
             <Card key={product._id} className="overflow-hidden hover:shadow-lg transition-shadow h-full">
               <div className="relative aspect-w-16 aspect-h-9">
@@ -179,6 +199,36 @@ const ProductManagementTab: React.FC<ProductManagementTabProps> = ({
               </Card.Content>
             </Card>
           ))}
+        </div>
+        
+        {/* Pagination Controls */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 px-4 py-3 border-t border-gray-200">
+            <div className="flex items-center text-sm text-gray-700">
+              <span>
+                Page {pagination.currentPage} of {pagination.totalPages}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange?.(pagination.currentPage - 1)}
+                disabled={!pagination.hasPrevPage || loading}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange?.(pagination.currentPage + 1)}
+                disabled={!pagination.hasNextPage || loading}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
         </div>
       )}
 

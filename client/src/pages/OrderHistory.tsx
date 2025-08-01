@@ -17,7 +17,7 @@ import {
   ShoppingBagIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import { Container, Card, Button, Badge, OrderStatus } from '../components/ui';
+import { Container, Card, Button, Badge, OrderStatus, OrderStatusTracker, Modal } from '../components/ui';
 import { RootState } from '../store/store';
 import api from '../utils/api';
 import { showErrorNotification } from '../utils/notifications';
@@ -84,6 +84,15 @@ const OrderHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusTrackingModal, setStatusTrackingModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({
+    isOpen: false,
+    order: null
+  });
+  const [deliveryProof, setDeliveryProof] = useState<any>(null);
+  const [deliveryProofLoading, setDeliveryProofLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -113,6 +122,40 @@ const OrderHistory = () => {
       showErrorNotification('Failed to load orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeliveryProof = async (orderId: string) => {
+    try {
+      setDeliveryProofLoading(true);
+      console.log('Fetching delivery proof for order:', orderId);
+      
+      const response = await api.get(`/delivery-proof/order/${orderId}`);
+      console.log('Delivery proof response:', response.data);
+      
+      if (response.data.success) {
+        setDeliveryProof(response.data.deliveryProof);
+      } else {
+        setDeliveryProof(null);
+      }
+    } catch (error: any) {
+      console.error('Error fetching delivery proof:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      if (error.response?.status === 403) {
+        console.error('Access denied - user may not have permission to view this order');
+        showErrorNotification('Access denied: You do not have permission to view delivery proof for this order');
+      } else if (error.response?.status === 404) {
+        console.error('Order not found');
+        showErrorNotification('Order not found');
+      } else {
+        showErrorNotification('Failed to load delivery proof');
+      }
+      
+      setDeliveryProof(null);
+    } finally {
+      setDeliveryProofLoading(false);
     }
   };
 
@@ -278,10 +321,11 @@ const OrderHistory = () => {
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <Card hover className="cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                      <Card hover>
                         <Card.Content>
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
+                          <div className="space-y-4">
+                            {/* Order Info Section */}
+                            <div className="cursor-pointer" onClick={() => setSelectedOrder(order)}>
                               <div className="flex items-center space-x-4 mb-3">
                                 <h3 className="font-semibold text-gray-900">#{order.orderNumber}</h3>
                                 <OrderStatus status={order.status} />
@@ -307,10 +351,35 @@ const OrderHistory = () => {
                                 </div>
                               </div>
                             </div>
-                            <Button variant="outline" size="sm" className="flex items-center">
-                              <EyeIcon className="w-4 h-4 mr-2" />
-                              View Details
-                            </Button>
+                            
+                            {/* Action Buttons Section */}
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-gray-100">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center justify-center"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  setStatusTrackingModal({ isOpen: true, order });
+                                  await fetchDeliveryProof(order._id);
+                                }}
+                              >
+                                <TruckIcon className="w-4 h-4 mr-2" />
+                                Track Status
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrder(order);
+                                }}
+                              >
+                                <EyeIcon className="w-4 h-4 mr-2" />
+                                View Details
+                              </Button>
+                            </div>
                           </div>
                         </Card.Content>
                       </Card>
@@ -513,6 +582,35 @@ const OrderHistory = () => {
             </div>
           </div>
         </div>
+
+        {/* Status Tracking Modal */}
+        <Modal
+          isOpen={statusTrackingModal.isOpen}
+          onClose={() => {
+            setStatusTrackingModal({ isOpen: false, order: null });
+            setDeliveryProof(null);
+          }}
+          title={`Live Order Status - #${statusTrackingModal.order?.orderNumber}`}
+          size="4xl"
+        >
+          {deliveryProofLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <span className="ml-3 text-gray-600">Loading delivery proof...</span>
+            </div>
+          ) : statusTrackingModal.order ? (
+            <OrderStatusTracker
+              order={{
+                status: statusTrackingModal.order.status,
+                trackingNumber: statusTrackingModal.order.trackingNumber,
+                trackingUrl: statusTrackingModal.order.trackingUrl,
+                estimatedDelivery: statusTrackingModal.order.estimatedDelivery
+              }}
+              orderNumber={statusTrackingModal.order.orderNumber}
+              deliveryProof={deliveryProof}
+            />
+          ) : null}
+        </Modal>
       </Container>
     </div>
   );
