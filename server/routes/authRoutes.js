@@ -1,6 +1,7 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import User from '../models/User.js'
+import Vendor from '../models/Vendor.js'
 import jwt from 'jsonwebtoken'
 
 const router = express.Router()
@@ -43,6 +44,17 @@ router.post('/register', [
 
     await user.save()
 
+    // If vendor, create an empty vendor profile
+    if (role === 'vendor') {
+      const vendor = new Vendor({
+        user: user._id,
+        contact: { 
+          email: user.email 
+        }
+      })
+      await vendor.save()
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -58,7 +70,8 @@ router.post('/register', [
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        onboardingComplete: user.onboardingComplete
       }
     })
   } catch (error) {
@@ -124,7 +137,8 @@ router.post('/login', [
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        onboardingComplete: user.onboardingComplete
       }
     })
   } catch (error) {
@@ -164,7 +178,8 @@ router.get('/me', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        onboardingComplete: user.onboardingComplete
       }
     })
   } catch (error) {

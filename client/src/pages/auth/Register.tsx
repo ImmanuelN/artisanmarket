@@ -47,10 +47,16 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...registrationData } = formData;
-      await dispatch(register(registrationData)).unwrap();
+      const result = await dispatch(register(registrationData)).unwrap();
       
       showSuccessNotification('Registration successful! Welcome to ArtisanMarket!');
-      navigate('/');
+      
+      // Redirect based on user role
+      if (result.user.role === 'vendor') {
+        navigate('/vendor');
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
       showErrorNotification(err || 'Registration failed. Please try again.');

@@ -3,6 +3,7 @@ export interface Store {
   _id: string;
   user: string;
   storeName: string;
+  slogan?: string;
   storeDescription: string;
   logo: string | null;
   banner: string | null;

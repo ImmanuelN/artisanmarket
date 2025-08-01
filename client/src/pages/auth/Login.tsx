@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { AppDispatch } from '../../store/store';
 import { login } from '../../store/slices/authSlice';
-import { Container, Button, Input, Card, Logo } from '../../components/ui';
+import { Container, Button, Input, Card } from '../../components/ui';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -35,8 +35,16 @@ const Login = () => {
     setError('');
 
     try {
-      await dispatch(login(formData)).unwrap();
-      navigate(from, { replace: true });
+      const result = await dispatch(login(formData)).unwrap();
+      
+      // Redirect based on user role and from location
+      if (result.user.role === 'vendor' && from === '/') {
+        // If vendor is logging in from the root, redirect to vendor dashboard
+        navigate('/vendor', { replace: true });
+      } else {
+        // Use the original destination or default
+        navigate(from, { replace: true });
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');
     } finally {

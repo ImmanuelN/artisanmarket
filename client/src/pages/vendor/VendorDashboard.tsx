@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
+import { io } from 'socket.io-client'
 import {
   BuildingStorefrontIcon,
   CurrencyDollarIcon,
   ShoppingBagIcon,
-  UserGroupIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   EyeIcon,
   PencilIcon,
   PlusIcon,
@@ -17,24 +16,17 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  StarIcon,
   PhotoIcon,
   DocumentTextIcon,
   BanknotesIcon,
-  CalendarDaysIcon,
   ArrowUpIcon,
-  ArrowDownIcon,
-  EllipsisVerticalIcon,
   EnvelopeIcon,
-  PhoneIcon,
-  MapPinIcon,
-  GlobeAltIcon,
-  HeartIcon,
   ChatBubbleLeftRightIcon,
   CameraIcon,
   TrashIcon,
   ArrowTopRightOnSquareIcon,
   UserIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
 import { Container, Card, Button, Badge, Input } from '../../components/ui'
@@ -47,12 +39,10 @@ import StoreBanner from '../../components/ui/StoreBanner';
 import ImageKit from "imagekit-javascript";
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 import Modal from '../../components/ui/Modal';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ProductForm from '../../components/forms/ProductForm';
+import DashboardNavigation from '../../components/layout/DashboardNavigation';
 import ProductManagementTab from './tabs/ProductManagementTab';
 import VendorBankDashboard from './VendorBankDashboard';
-import DashboardNavigation from '../../components/layout/DashboardNavigation';
-import { io } from 'socket.io-client';
 
 const VendorDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -973,6 +963,19 @@ const VendorDashboard = () => {
                                   name="storeName"
                                 value={profileData?.storeName || ''}
                                   onChange={handleInputChange}
+                                />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Store Slogan
+                              </label>
+                                <Input
+                                  name="slogan"
+                                value={profileData?.slogan || ''}
+                                  onChange={handleInputChange}
+                                  placeholder="A catchy tagline for your store"
+                                  maxLength={200}
                                 />
                             </div>
 

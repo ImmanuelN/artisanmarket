@@ -37,6 +37,7 @@ import { Help, Shipping, Returns, FAQ, Privacy, Terms, Cookies } from './pages/P
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import OnboardingGuard from './components/vendor/OnboardingGuard'
 import StorePage from './pages/vendor/StorePage'
 
 function App() {
@@ -105,17 +106,23 @@ function App() {
           {/* Vendor Routes */}
           <Route path="/vendor/*" element={
             <ProtectedRoute role="vendor">
-              <VendorDashboard />
+              <OnboardingGuard>
+                <VendorDashboard />
+              </OnboardingGuard>
             </ProtectedRoute>
           } />
           <Route path="/vendor-bank" element={
             <ProtectedRoute role="vendor">
-              <VendorBankDashboard />
+              <OnboardingGuard>
+                <VendorBankDashboard />
+              </OnboardingGuard>
             </ProtectedRoute>
           } />
           <Route path="/vendor-bank-test" element={
             <ProtectedRoute role="vendor">
-              <BankTestPage />
+              <OnboardingGuard>
+                <BankTestPage />
+              </OnboardingGuard>
             </ProtectedRoute>
           } />
           

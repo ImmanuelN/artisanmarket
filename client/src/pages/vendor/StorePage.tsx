@@ -51,9 +51,12 @@ const StorePage = () => {
         </div>
       </div>
       <Container className="pt-20 pb-8">
-        {/* Store Name & Description */}
+        {/* Store Name & Slogan */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{profile.storeName}</h1>
+          {profile.slogan && (
+            <p className="text-xl text-gray-600 font-medium mb-3 italic">"{profile.slogan}"</p>
+          )}
           <div className="flex flex-wrap justify-center gap-2 mb-2">
             {/* Verification badge */}
             {profile.verification?.status && (
@@ -74,7 +77,6 @@ const StorePage = () => {
               </span>
             )}
           </div>
-          <p className="text-lg text-gray-600 mb-1">{profile.storeDescription}</p>
           {/* Member since */}
           <div className="text-sm text-gray-500 mb-2">
             Member since {profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'N/A'}
@@ -144,7 +146,7 @@ const StorePage = () => {
                 {/* Social Media */}
                 {profile.contact?.socialMedia && (
                   <div className="flex gap-2 mt-2">
-                    {Object.entries(profile.contact.socialMedia).map(([platform, url], idx) => (
+                    {Object.entries(profile.contact.socialMedia).map(([platform, url]) => (
                       typeof url === 'string' && url ? (
                         <Button
                           key={platform}

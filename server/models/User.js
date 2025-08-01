@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'vendor', 'admin'],
     default: 'customer'
   },
+  onboardingComplete: {
+    type: Boolean,
+    default: false
+  },
   avatar: {
     type: String,
     default: null

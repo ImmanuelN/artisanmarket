@@ -9,9 +9,15 @@ const vendorSchema = new mongoose.Schema({
   },
   storeName: {
     type: String,
-    required: [true, 'Store name is required'],
     trim: true,
-    maxlength: [100, 'Store name cannot exceed 100 characters']
+    maxlength: [100, 'Store name cannot exceed 100 characters'],
+    default: ''
+  },
+  slogan: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Slogan cannot exceed 200 characters'],
+    default: ''
   },
   storeDescription: {
     type: String,
