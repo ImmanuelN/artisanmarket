@@ -17,6 +17,7 @@ interface VendorStats {
   totalSales: number
   totalRevenue: number
   totalOrders: number
+  activeProducts: number
   monthlyRevenue: number[]
   topProducts: VendorProduct[]
 }

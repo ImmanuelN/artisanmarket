@@ -75,4 +75,25 @@ router.post('/image', requireAuth, upload.single('image'), async (req, res) => {
   }
 });
 
+// POST /avatar - upload an avatar image to ImageKit
+router.post('/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
+  if (!imagekit) {
+    return res.status(500).json({ message: 'ImageKit SDK not initialized.' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+  try {
+    const result = await imagekit.upload({
+      file: req.file.buffer,
+      fileName: `avatar_${req.user._id}_${Date.now()}_${req.file.originalname}`,
+      folder: '/avatars',
+    });
+    res.json({ success: true, url: result.url });
+  } catch (error) {
+    console.error('ImageKit avatar upload error:', error);
+    res.status(500).json({ success: false, message: 'Avatar upload failed.' });
+  }
+});
+
 export default router;

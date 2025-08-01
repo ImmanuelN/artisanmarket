@@ -1,5 +1,31 @@
 # ArtisanMarket Vendor Banking Implementation - Complete
 
+## ⚠️ LATEST UPDATE: Processing Center Workflow
+
+### 🔄 **Workflow Change** (Latest Implementation)
+The system has been updated to reflect a **processing center workflow** instead of direct customer delivery:
+
+- **OLD**: Vendors upload delivery proof to customers (pending → delivered)
+- **NEW**: Vendors upload arrival proof to processing center (pending → processing)
+
+### 📋 **New Order Status Flow**
+1. **Pending** → Vendor uploads arrival proof → **Processing**
+2. **Processing** → Admin approves proof → **Shipped** 
+3. **Shipped** → Processing team delivers → **Delivered**
+
+### ⏰ **15-Minute Re-upload Window**
+- Vendors can re-upload arrival proof within 15 minutes of initial upload
+- After 15 minutes, the upload is locked and cannot be changed
+- Visual indicator shows when re-upload is still available
+
+### 🎯 **Updated UI Elements**
+- Button: "Upload Arrival Proof" (for pending orders only)
+- Modal: "Upload Arrival Proof - Order #XXX"
+- Form: "Arrival Photo", "Arrival Notes", "Processing Center Location"
+- Success: "Arrival proof uploaded successfully! Order moved to processing."
+
+---
+
 ## Overview
 
 The vendor banking system has been fully implemented with the following features:

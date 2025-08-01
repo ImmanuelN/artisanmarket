@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UserIcon,
@@ -29,6 +30,7 @@ import CustomerShippingInfo from '../../components/customer/CustomerShippingInfo
 import CustomerPreferences from '../../components/customer/CustomerPreferences';
 import OrderHistory from '../OrderHistory';
 import DashboardNavigation from '../../components/layout/DashboardNavigation';
+import Wishlist from '../Wishlist';
 
 interface CustomerStats {
   totalOrders: number;
@@ -39,9 +41,24 @@ interface CustomerStats {
 
 const CustomerDashboard = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const { items: wishlistItems } = useSelector((state: RootState) => state.wishlist);
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState<CustomerStats | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Handle tab parameter from URL
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    console.log('CustomerDashboard - URL tab parameter:', tabParam);
+    if (tabParam) {
+      const validTabs = ['overview', 'profile', 'banking', 'shipping', 'preferences', 'orders', 'wishlist'];
+      if (validTabs.includes(tabParam)) {
+        console.log('Setting active tab to:', tabParam);
+        setActiveTab(tabParam);
+      }
+    }
+  }, [searchParams]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: HomeIcon },
@@ -55,12 +72,13 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     fetchCustomerStats();
-  }, []);
+  }, [wishlistItems.length]); // Re-fetch when wishlist changes
 
   const fetchCustomerStats = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/customers/stats');
+      // Send wishlist count as query parameter
+      const response = await api.get(`/customers/stats?wishlistCount=${wishlistItems.length}`);
       setStats(response.data.stats);
     } catch (error) {
       console.error('Error fetching customer stats:', error);
@@ -242,28 +260,7 @@ const CustomerDashboard = () => {
 
             {/* Wishlist Tab */}
             {activeTab === 'wishlist' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">My Wishlist</h2>
-                  <Button variant="outline" onClick={() => window.location.href = '/wishlist'}>
-                    View All Items
-                  </Button>
-                </div>
-                <Card>
-                  <Card.Content className="p-6">
-                    <div className="text-center py-12">
-                      <HeartIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Wishlist</h3>
-                      <p className="text-gray-600 mb-4">
-                        Save your favorite items and get notified when they're back in stock.
-                      </p>
-                      <Button onClick={() => window.location.href = '/wishlist'}>
-                        View Wishlist
-                      </Button>
-                    </div>
-                  </Card.Content>
-                </Card>
-              </div>
+              <Wishlist />
             )}
           </motion.div>
         </AnimatePresence>

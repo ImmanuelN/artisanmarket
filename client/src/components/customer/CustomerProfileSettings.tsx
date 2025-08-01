@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -13,7 +13,8 @@ import {
   KeyIcon
 } from '@heroicons/react/24/outline';
 import { Card, Button, Badge } from '../ui';
-import { RootState } from '../../store/store';
+import { RootState, AppDispatch } from '../../store/store';
+import { updateUser } from '../../store/slices/authSlice';
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 import api from '../../utils/api';
 
@@ -32,6 +33,7 @@ interface PasswordData {
 
 const CustomerProfileSettings = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     email: '',
@@ -138,6 +140,13 @@ const CustomerProfileSettings = () => {
     try {
       const response = await api.put('/customers/profile', profileData);
       
+      // Update Redux store with new user data
+      dispatch(updateUser({
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone
+      }));
+      
       showSuccessNotification('Profile updated successfully!');
     } catch (error: any) {
       showErrorNotification(error.response?.data?.message || 'Failed to update profile');
@@ -155,7 +164,7 @@ const CustomerProfileSettings = () => {
 
     setIsPasswordLoading(true);
     try {
-      const response = await api.put('/customers/password', {
+      await api.put('/customers/password', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
@@ -191,16 +200,24 @@ const CustomerProfileSettings = () => {
 
     setIsLoading(true);
     try {
+      // First upload the file to get the URL
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const response = await api.put('/customers/avatar', formData, {
+      const uploadResponse = await api.post('/upload/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
       
-      setProfileData(prev => ({ ...prev, avatar: response.data.avatar }));
+      // Then update the user's avatar URL
+      await api.put('/customers/avatar', {
+        avatarUrl: uploadResponse.data.url
+      });
+      
+      // Update Redux store and local state
+      dispatch(updateUser({ avatar: uploadResponse.data.url }));
+      setProfileData(prev => ({ ...prev, avatar: uploadResponse.data.url }));
       showSuccessNotification('Avatar updated successfully!');
     } catch (error: any) {
       showErrorNotification(error.response?.data?.message || 'Failed to update avatar');
@@ -555,9 +572,11 @@ const CustomerProfileSettings = () => {
             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
               <div className="flex items-center">
                 <EnvelopeIcon className="w-5 h-5 text-blue-600 mr-3" />
-                <span className="text-sm font-medium text-blue-900">Email Verified</span>
+                <span className="text-sm font-medium text-blue-900">Email Verification</span>
               </div>
-              <Badge variant="success">Verified</Badge>
+              <Badge variant={user?.isEmailVerified ? "success" : "warning"}>
+                {user?.isEmailVerified ? "Verified" : "Pending"}
+              </Badge>
             </div>
             
             <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">

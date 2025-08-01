@@ -139,22 +139,209 @@ router.get('/stats', requireAuth, async (req, res) => {
     const userId = req.user.userId;
     const vendor = await Vendor.findOne({ user: userId });
     if (!vendor) {
-      return res.json({ success: true, stats: {} });
+      return res.json({ 
+        success: true, 
+        stats: {
+          totalRevenue: 0,
+          totalOrders: 0,
+          activeProducts: 0,
+          pendingOrders: 0
+        } 
+      });
     }
-    // Return metrics if available
-    res.json({ success: true, stats: vendor.metrics || {} });
+
+    // Import models needed for stats
+    const Product = (await import('../models/Product.js')).default;
+    const Order = (await import('../models/Order.js')).default;
+
+    // Get active products count
+    const activeProducts = await Product.countDocuments({ 
+      vendor: vendor._id, 
+      status: 'active' 
+    });
+
+    // Get total orders for this vendor
+    const totalOrders = await Order.countDocuments({
+      'items.vendor': vendor._id
+    });
+
+    // Get pending orders count
+    const pendingOrders = await Order.countDocuments({
+      'items.vendor': vendor._id,
+      status: { $in: ['pending', 'processing', 'confirmed'] }
+    });
+
+    // Calculate total revenue from completed orders
+    const completedOrders = await Order.find({
+      'items.vendor': vendor._id,
+      status: { $in: ['delivered', 'completed'] }
+    });
+
+    let totalRevenue = 0;
+    completedOrders.forEach(order => {
+      order.items.forEach(item => {
+        if (item.vendor && item.vendor.toString() === vendor._id.toString()) {
+          totalRevenue += (item.price * item.quantity);
+        }
+      });
+    });
+
+    const stats = {
+      totalRevenue,
+      totalOrders,
+      activeProducts,
+      pendingOrders
+    };
+
+    res.json({ success: true, stats });
   } catch (err) {
+    console.error('Vendor stats error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// GET /orders - get orders for current vendor (basic implementation)
+// GET /orders - get orders for current vendor
 router.get('/orders', requireAuth, async (req, res) => {
   try {
-    // If you have an Order model, fetch orders for this vendor
-    // For now, return empty array if not implemented
-    res.json({ success: true, orders: [] });
+    const userId = req.user.userId;
+    const vendor = await Vendor.findOne({ user: userId });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+    }
+
+    const Order = (await import('../models/Order.js')).default;
+    
+    const { status } = req.query;
+    let query = { 'items.vendor': vendor._id };
+    
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    
+    const orders = await Order.find(query)
+      .populate('customer', 'name email')
+      .populate('items.product', 'title images price')
+      .populate('deliveryProof')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({ success: true, orders });
   } catch (err) {
+    console.error('Vendor orders error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// POST /orders/:orderId/delivery-proof - upload arrival proof (changes pending to processing)
+router.post('/orders/:orderId/delivery-proof', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const vendor = await Vendor.findOne({ user: userId });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+    }
+
+    const { orderId } = req.params;
+    const { imageUrl, imageId, deliveryNotes, deliveryLocation, metadata } = req.body;
+
+    if (!imageUrl || !imageId) {
+      return res.status(400).json({ success: false, message: 'Image URL and ID are required' });
+    }
+
+    const Order = (await import('../models/Order.js')).default;
+    const DeliveryProof = (await import('../models/DeliveryProof.js')).default;
+
+    // Verify order belongs to vendor and is in pending status
+    const order = await Order.findOne({ 
+      _id: orderId, 
+      'items.vendor': vendor._id,
+      status: 'pending' // Only allow for pending orders
+    });
+
+    if (!order) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Order not found, not associated with this vendor, or not in pending status' 
+      });
+    }
+
+    // Check if delivery proof already exists
+    let existingProof = await DeliveryProof.findOne({ order: orderId });
+    
+    if (existingProof) {
+      // Check if within 15-minute window for re-upload
+      const uploadTime = new Date(existingProof.uploadedAt);
+      const now = new Date();
+      const timeDiff = (now.getTime() - uploadTime.getTime()) / (1000 * 60); // minutes
+      
+      if (timeDiff > 15) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Re-upload window has expired. You can only re-upload within 15 minutes of the original upload.' 
+        });
+      }
+      
+      // Update existing proof
+      existingProof.imageUrl = imageUrl;
+      existingProof.imageId = imageId;
+      existingProof.deliveryNotes = deliveryNotes;
+      existingProof.deliveryLocation = deliveryLocation;
+      existingProof.metadata = metadata;
+      existingProof.uploadedAt = new Date();
+      await existingProof.save();
+      
+      res.json({ 
+        success: true, 
+        message: 'Arrival proof updated successfully',
+        deliveryProof: existingProof
+      });
+    } else {
+      // Create new delivery proof
+      const deliveryProof = new DeliveryProof({
+        order: orderId,
+        vendor: vendor._id,
+        imageUrl,
+        imageId,
+        deliveryNotes,
+        deliveryLocation,
+        metadata
+      });
+
+      await deliveryProof.save();
+
+      // Update order with delivery proof and change status to processing
+      order.deliveryProof = deliveryProof._id;
+      order.status = 'processing'; // Change from pending to processing
+      await order.save();
+
+      res.json({ 
+        success: true, 
+        message: 'Arrival proof uploaded successfully! Order moved to processing.',
+        deliveryProof
+      });
+    }
+  } catch (err) {
+    console.error('Upload arrival proof error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// GET /delivery-proofs - get delivery proofs for current vendor
+router.get('/delivery-proofs', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const vendor = await Vendor.findOne({ user: userId });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+    }
+
+    const DeliveryProof = (await import('../models/DeliveryProof.js')).default;
+    
+    const deliveryProofs = await DeliveryProof.findByVendor(vendor._id);
+
+    res.json({ success: true, deliveryProofs });
+  } catch (err) {
+    console.error('Get delivery proofs error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

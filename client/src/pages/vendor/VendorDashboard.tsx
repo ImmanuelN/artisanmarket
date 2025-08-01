@@ -59,6 +59,23 @@ const VendorDashboard = () => {
   const [vendorProducts, setVendorProducts] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [vendorBalance, setVendorBalance] = useState<any>(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [deliveryProofModal, setDeliveryProofModal] = useState<{
+    isOpen: boolean;
+    orderId: string | null;
+    orderNumber: string | null;
+  }>({
+    isOpen: false,
+    orderId: null,
+    orderNumber: null
+  });
+  const [deliveryProofForm, setDeliveryProofForm] = useState({
+    image: null as File | null,
+    deliveryNotes: '',
+    deliveryLocation: ''
+  });
+  const [uploadingProof, setUploadingProof] = useState(false);
 
   // Set initial form data when profile loads
   useEffect(() => {
@@ -111,6 +128,20 @@ const VendorDashboard = () => {
     }
   }
 
+  const fetchVendorBalance = async () => {
+    try {
+      setBalanceLoading(true);
+      const response = await api.get('/vendor-balance/balance');
+      if (response.data.success) {
+        setVendorBalance(response.data.balance);
+      }
+    } catch (error) {
+      console.error('Error fetching vendor balance:', error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
   const fetchVendorOrdersWithFilter = async (status: string) => {
     try {
       setOrdersLoading(true);
@@ -155,6 +186,100 @@ const VendorDashboard = () => {
     }
   }
 
+  const uploadDeliveryProof = async (orderId: string, formData: any) => {
+    try {
+      setUploadingProof(true);
+      
+      // First upload image to ImageKit
+      const authResponse = await fetch('/api/upload/imagekit-auth', {
+        method: 'POST',
+      });
+
+      if (!authResponse.ok) {
+        throw new Error('Failed to get upload authentication');
+      }
+
+      const authParams = await authResponse.json();
+
+      // Upload image using ImageKit
+      const imagekit = (await import('imagekit-javascript')).default;
+      const ikInstance = new imagekit({
+        publicKey: import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY || '',
+        urlEndpoint: import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || '',
+      });
+
+      return new Promise((resolve, reject) => {
+        ikInstance.upload(
+          {
+            file: formData.image,
+            fileName: `delivery-proof-${orderId}-${Date.now()}.jpg`,
+            tags: ['delivery-proof', orderId],
+            ...authParams,
+          },
+          async (err: any, result: any) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            try {
+              // Submit delivery proof to backend
+              const response = await api.post(`/vendor/orders/${orderId}/delivery-proof`, {
+                imageUrl: result.url,
+                imageId: result.fileId,
+                deliveryNotes: formData.deliveryNotes,
+                deliveryLocation: {
+                  address: formData.deliveryLocation
+                },
+                metadata: {
+                  fileSize: result.size,
+                  mimeType: result.fileType,
+                  dimensions: {
+                    width: result.width,
+                    height: result.height
+                  }
+                }
+              });
+
+              if (response.data.success) {
+                showSuccessNotification('Arrival proof uploaded successfully! Order moved to processing.');
+                fetchVendorOrders(); // Refresh orders
+                setDeliveryProofModal({ isOpen: false, orderId: null, orderNumber: null });
+                setDeliveryProofForm({ image: null, deliveryNotes: '', deliveryLocation: '' });
+                resolve(response.data);
+              } else {
+                showErrorNotification(response.data.message || 'Failed to upload arrival proof');
+                reject(new Error(response.data.message));
+              }
+            } catch (error: any) {
+              console.error('Upload arrival proof error:', error);
+              showErrorNotification(error.response?.data?.message || 'An error occurred while uploading arrival proof');
+              reject(error);
+            } finally {
+              setUploadingProof(false);
+            }
+          }
+        );
+      });
+    } catch (error) {
+      setUploadingProof(false);
+      throw error;
+    }
+  };
+
+  const handleDeliveryProofSubmit = async () => {
+    if (!deliveryProofModal.orderId || !deliveryProofForm.image) {
+      showErrorNotification('Please select an image for arrival proof');
+      return;
+    }
+
+    try {
+      await uploadDeliveryProof(deliveryProofModal.orderId, deliveryProofForm);
+    } catch (error) {
+      console.error('Arrival proof submission error:', error);
+    }
+  };
+
   const fetchVendorProducts = async (vendorId: string) => {
     try {
       const response = await api.get(`/products?vendor=${vendorId}`);
@@ -188,6 +313,7 @@ const VendorDashboard = () => {
       fetchVendorProfile()
       fetchVendorStats()
       fetchVendorOrders()
+      fetchVendorBalance()
     }
   }, [user])
 
@@ -567,7 +693,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              ${currentStats?.totalRevenue?.toLocaleString() || '0.00'}
+                              ${stats?.totalRevenue?.toFixed(2) || '0.00'}
                             </p>
                             <p className="text-sm text-gray-600">Total Revenue</p>
                             <div className="flex items-center mt-2">
@@ -587,7 +713,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              {currentStats?.totalOrders?.toLocaleString() || '0'}
+                              {stats?.totalOrders || '0'}
                             </p>
                             <p className="text-sm text-gray-600">Total Orders</p>
                             <div className="flex items-center mt-2">
@@ -607,7 +733,7 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              {currentStats?.totalProducts || '0'}
+                              {stats?.activeProducts || '0'}
                             </p>
                             <p className="text-sm text-gray-600">Active Products</p>
                             <div className="flex items-center mt-2">
@@ -627,11 +753,13 @@ const VendorDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-2xl font-bold text-gray-900">
-                              ${currentProfile?.financials?.balance?.toFixed(2) || '0.00'}
+                              ${vendorBalance?.availableBalance?.toFixed(2) || '0.00'}
                             </p>
                             <p className="text-sm text-gray-600">Available Balance</p>
                             <div className="flex items-center mt-2">
-                              <span className="text-sm text-gray-600">Next payout: Jul 25</span>
+                              <span className="text-sm text-gray-600">
+                                Pending: ${vendorBalance?.pendingBalance?.toFixed(2) || '0.00'}
+                              </span>
                             </div>
                           </div>
                           <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
@@ -649,9 +777,13 @@ const VendorDashboard = () => {
                       <Card.Header>
                         <div className="flex items-center justify-between">
                           <Card.Title>Recent Orders</Card.Title>
-                          <Link to="/vendor/orders">
-                            <Button variant="outline" size="sm">View All</Button>
-                          </Link>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setActiveTab('orders')}
+                          >
+                            View All
+                          </Button>
                         </div>
                       </Card.Header>
                       <Card.Content>
@@ -679,7 +811,7 @@ const VendorDashboard = () => {
                                     <p className="text-sm text-gray-600">
                                       {order.items?.map((item: any, index: number) => (
                                         <span key={index}>
-                                          {item.product?.title || 'Unknown Product'}
+                                          {item.product?.title || 'Unknown Product'} (x{item.quantity || 1})
                                           {index < order.items.length - 1 ? ', ' : ''}
                                         </span>
                                       )) || 'No items'}
@@ -687,7 +819,7 @@ const VendorDashboard = () => {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-semibold text-gray-900">${order.total}</p>
+                                  <p className="font-semibold text-gray-900">${order.total.toFixed(2)}</p>
                                   <Badge color={getStatusColor(order.status)}>
                                     {order.status}
                                   </Badge>
@@ -804,7 +936,7 @@ const VendorDashboard = () => {
                                       <p className="text-sm text-gray-500">
                                         {order.items?.map((item: any, index: number) => (
                                           <span key={index}>
-                                            {item.product?.title || 'Unknown Product'}
+                                            {item.product?.title || 'Unknown Product'} (x{item.quantity || 1})
                                             {index < order.items.length - 1 ? ', ' : ''}
                                           </span>
                                         )) || 'No items'}
@@ -820,7 +952,7 @@ const VendorDashboard = () => {
                                       {order.status}
                                     </Badge>
                                     <p className="text-sm text-gray-500 mt-1">
-                                      {order.items[index].quantity || 0} item{order.items[index].quantity !== 1 ? 's' : ''}
+                                      {order.items?.reduce((total: number, item: any) => total + (item.quantity || 0), 0)} item{order.items?.reduce((total: number, item: any) => total + (item.quantity || 0), 0) !== 1 ? 's' : ''}
                                     </p>
                                   </div>
                                 </div>
@@ -855,39 +987,95 @@ const VendorDashboard = () => {
                                    {/* Order Actions */}
                                    <div className="mt-4 pt-4 border-t border-gray-100">
                                      <div className="flex flex-wrap gap-2">
-                                       {/* Status Update */}
-                                       <select 
-                                         className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                         value={order.status}
-                                         onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                       >
-                                         <option value="pending">Pending</option>
-                                         <option value="processing">Processing</option>
-                                         <option value="shipped">Shipped</option>
-                                         <option value="delivered">Delivered</option>
-                                         <option value="cancelled">Cancelled</option>
-                                       </select>
+                                       {/* Escrow Status */}
+                                       <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-md">
+                                         <span className="text-sm font-medium text-blue-700">
+                                           Escrow: {order.escrowStatus || 'held'}
+                                         </span>
+                                         {order.escrowStatus === 'held' && (
+                                           <span className="text-xs text-blue-600">
+                                             ${order.escrowAmount?.toFixed(2) || order.total?.toFixed(2)} held
+                                           </span>
+                                         )}
+                                       </div>
+
+                                       {/* Status Display (Read-only for vendors) */}
+                                       <div className="px-3 py-1 bg-gray-50 rounded-md">
+                                         <span className="text-sm text-gray-600">
+                                           Status: <span className="font-medium">{order.status}</span>
+                                         </span>
+                                       </div>
                                        
-                                                                               {/* Tracking Info */}
-                                        {order.status === 'shipped' && (
-                                          <Button 
-                                            size="sm" 
-                                            variant="outline"
-                                            onClick={() => {
-                                              const trackingNumber = prompt('Enter tracking number:')
-                                              if (trackingNumber && trackingNumber.trim()) {
-                                                const trackingUrl = prompt('Enter tracking URL (optional):')
-                                                addTrackingInfo(order._id, trackingNumber.trim(), trackingUrl?.trim() || '')
-                                              } else if (trackingNumber !== null) {
-                                                showErrorNotification('Tracking number is required')
-                                              }
-                                            }}
-                                          >
-                                            <ArrowTopRightOnSquareIcon className="w-4 h-4 mr-1" />
-                                            Add Tracking
-                                          </Button>
-                                        )}
-                                      
+                                       {/* Tracking Info */}
+                                       {order.status === 'shipped' && !order.deliveryProof && (
+                                         <Button 
+                                           size="sm" 
+                                           variant="outline"
+                                           onClick={() => {
+                                             const trackingNumber = prompt('Enter tracking number:')
+                                             if (trackingNumber && trackingNumber.trim()) {
+                                               const trackingUrl = prompt('Enter tracking URL (optional):')
+                                               addTrackingInfo(order._id, trackingNumber.trim(), trackingUrl?.trim() || '')
+                                             } else if (trackingNumber !== null) {
+                                               showErrorNotification('Tracking number is required')
+                                             }
+                                           }}
+                                         >
+                                           <ArrowTopRightOnSquareIcon className="w-4 h-4 mr-1" />
+                                           Add Tracking
+                                         </Button>
+                                       )}
+
+                                       {/* Delivery Proof Upload - Only for pending orders */}
+                                       {order.status === 'pending' && !order.deliveryProof && (
+                                         <Button 
+                                           size="sm" 
+                                           variant="primary"
+                                           onClick={() => setDeliveryProofModal({
+                                             isOpen: true,
+                                             orderId: order._id,
+                                             orderNumber: order.orderNumber
+                                           })}
+                                         >
+                                           <CameraIcon className="w-4 h-4 mr-1" />
+                                           Upload Proof of Order HandOff
+                                         </Button>
+                                       )}
+
+                                       {/* Show if proof was uploaded and allow re-upload within 15 minutes */}
+                                       {order.deliveryProof && (
+                                         <div className="flex items-center gap-2">
+                                           <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-md">
+                                             <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                                             <span className="text-sm text-green-700">
+                                               Arrival proof uploaded
+                                             </span>
+                                           </div>
+                                           {/* Allow re-upload within 15 minutes */}
+                                           {new Date().getTime() - new Date(order.deliveryProof.uploadedAt || order.updatedAt).getTime() < 15 * 60 * 1000 && (
+                                             <Button 
+                                               size="sm" 
+                                               variant="outline"
+                                               onClick={() => setDeliveryProofModal({
+                                                 isOpen: true,
+                                                 orderId: order._id,
+                                                 orderNumber: order.orderNumber
+                                               })}
+                                             >
+                                               <CameraIcon className="w-4 h-4 mr-1" />
+                                               Re-upload
+                                             </Button>
+                                           )}
+                                         </div>
+                                       )}
+
+                                       {/* Admin Note */}
+                                       <div className="w-full mt-2 px-3 py-2 bg-amber-50 rounded-md">
+                                         <p className="text-xs text-amber-700">
+                                           <strong>Note:</strong> Upload arrival proof when items reach the processing center. 
+                                           This will change status to "processing" for warehouse team review.
+                                         </p>
+                                       </div>
                                      </div>
                                    </div>
                                  </div>
@@ -1328,6 +1516,125 @@ const VendorDashboard = () => {
           onSubmit={handleProductSubmit}
           onCancel={() => setAddProductModalOpen(false)}
         />
+      </Modal>
+
+      {/* Delivery Proof Upload Modal */}
+      <Modal
+        isOpen={deliveryProofModal.isOpen}
+        onClose={() => {
+          setDeliveryProofModal({ isOpen: false, orderId: null, orderNumber: null });
+          setDeliveryProofForm({ image: null, deliveryNotes: '', deliveryLocation: '' });
+        }}
+        title={`Upload Arrival Proof - Order #${deliveryProofModal.orderNumber}`}
+        size="2xl"
+        footer={
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDeliveryProofModal({ isOpen: false, orderId: null, orderNumber: null });
+                setDeliveryProofForm({ image: null, deliveryNotes: '', deliveryLocation: '' });
+              }}
+              disabled={uploadingProof}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeliveryProofSubmit}
+              disabled={uploadingProof || !deliveryProofForm.image}
+            >
+              {uploadingProof ? 'Uploading...' : 'Upload Arrival Proof'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 mr-2" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Important</p>
+                <p className="text-sm text-amber-700">
+                  Upload a clear photo showing the items have arrived at the processing center/warehouse. 
+                  This will change the order status to "processing" for the warehouse team to handle.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Arrival Photo *
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                {deliveryProofForm.image ? (
+                  <div className="space-y-2">
+                    <img 
+                      src={URL.createObjectURL(deliveryProofForm.image)} 
+                      alt="Arrival proof preview" 
+                      className="mx-auto h-32 w-auto rounded-lg"
+                    />
+                    <p className="text-sm text-gray-600">{deliveryProofForm.image.name}</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setDeliveryProofForm(prev => ({ ...prev, image: null }))}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <CameraIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label className="relative cursor-pointer bg-white rounded-md font-medium text-amber-600 hover:text-amber-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-amber-500">
+                        <span>Upload a photo</span>
+                        <input 
+                          type="file" 
+                          className="sr-only" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setDeliveryProofForm(prev => ({ ...prev, image: file }));
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Arrival Notes (Optional)
+            </label>
+            <textarea
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder="Any notes about the arrival at processing center..."
+              value={deliveryProofForm.deliveryNotes}
+              onChange={(e) => setDeliveryProofForm(prev => ({ ...prev, deliveryNotes: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Processing Center Location (Optional)
+            </label>
+            <Input
+              placeholder="e.g., Warehouse A, Section 3, Processing Bay 2"
+              value={deliveryProofForm.deliveryLocation}
+              onChange={(e) => setDeliveryProofForm(prev => ({ ...prev, deliveryLocation: e.target.value }))}
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );

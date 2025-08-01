@@ -8,6 +8,8 @@ interface User {
   role: 'customer' | 'vendor' | 'admin'
   onboardingComplete?: boolean
   avatar?: string
+  phone?: string
+  isEmailVerified?: boolean
 }
 
 interface AuthState {

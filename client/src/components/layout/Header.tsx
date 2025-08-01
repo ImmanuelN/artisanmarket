@@ -16,7 +16,6 @@ import {
 import { RootState, AppDispatch } from '../../store/store'
 import { logout } from '../../store/slices/authSlice'
 import { toggleCart } from '../../store/slices/cartSlice'
-import { toggleWishlist } from '../../store/slices/wishlistSlice'
 import { Container, Button, Badge, Logo, Cart, Wishlist } from '../ui'
 import { User } from 'lucide-react'
 
@@ -128,38 +127,44 @@ const Header = () => {
             <div className="flex items-center space-x-2 lg:space-x-4">
 
               {/* Wishlist - Desktop only */}
-              <button
-                onClick={() => dispatch(toggleWishlist())}
-                className="relative hidden lg:flex p-2 text-gray-600 hover:text-amber-600 transition-colors"
-              >
-                <HeartIcon className="w-6 h-6" />
-                {wishlistItems.length > 0 && (
-                  <Badge
-                    variant="error"
-                    size="sm"
-                    className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
-                  >
-                    {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
-                  </Badge>
-                )}
-              </button>
+              {user && (
+                <button
+                  onClick={() => {
+                    navigate('/dashboard?tab=wishlist');
+                  }}
+                  className="relative hidden lg:flex p-2 text-gray-600 hover:text-amber-600 transition-colors"
+                >
+                  <HeartIcon className="w-6 h-6" />
+                  {wishlistItems.length > 0 && (
+                    <Badge
+                      variant="error"
+                      size="sm"
+                      className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
+                    >
+                      {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                    </Badge>
+                  )}
+                </button>
+              )}
 
               {/* Wishlist Link - Mobile */}
-              <Link
-                to="/wishlist"
-                className="lg:hidden relative p-2 text-gray-600 hover:text-amber-600 transition-colors"
-              >
-                <HeartIcon className="w-6 h-6" />
-                {wishlistItems.length > 0 && (
-                  <Badge
-                    variant="error"
-                    size="sm"
-                    className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
-                  >
-                    {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
-                  </Badge>
-                )}
-              </Link>
+              {user && (
+                <Link
+                  to="/dashboard?tab=wishlist"
+                  className="lg:hidden relative p-2 text-gray-600 hover:text-amber-600 transition-colors"
+                >
+                  <HeartIcon className="w-6 h-6" />
+                  {wishlistItems.length > 0 && (
+                    <Badge
+                      variant="error"
+                      size="sm"
+                      className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-xs font-bold bg-red-500"
+                    >
+                      {wishlistItems.length > 99 ? '99+' : wishlistItems.length}
+                    </Badge>
+                  )}
+                </Link>
+              )}
 
               {/* Cart */}
               <button
@@ -245,15 +250,6 @@ const Header = () => {
                             </Link>
                           )}
 
-
-                          <Link
-                            to="/profile?tab=wishlist"
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            onClick={() => setIsUserMenuOpen(false)}
-                          >
-                            <HeartIcon className="w-4 h-4 mr-3" />
-                            Wishlist
-                          </Link>
                         </div>
 
                         <div className="border-t border-gray-100 pt-2">
@@ -341,15 +337,6 @@ const Header = () => {
                       </Link>
                     ))}
 
-                    {/* Mobile Wishlist */}
-                    <Link
-                      to="/wishlist"
-                      className="flex items-center px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-gray-50 transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <HeartIcon className="w-5 h-5 mr-3" />
-                      Wishlist
-                    </Link>
                   </nav>
 
                   {/* Mobile User Actions */}

@@ -127,6 +127,27 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
+  escrowStatus: {
+    type: String,
+    enum: ['held', 'released', 'refunded'],
+    default: 'held'
+  },
+  escrowAmount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  escrowReleaseDate: {
+    type: Date
+  },
+  deliveryProof: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DeliveryProof'
+  },
+  canChangeStatus: {
+    type: Boolean,
+    default: false // Only admins can change status, vendors can only mark as delivered with proof
+  },
   subtotal: {
     type: Number,
     required: true,
@@ -198,7 +219,7 @@ orderSchema.pre('save', async function(next) {
   next();
 });
 
-// Calculate estimated delivery date
+// Calculate estimated delivery date and escrow amount
 orderSchema.pre('save', function(next) {
   if (this.isNew && !this.estimatedDelivery) {
     const deliveryDays = {
@@ -211,10 +232,25 @@ orderSchema.pre('save', function(next) {
     estimatedDate.setDate(estimatedDate.getDate() + deliveryDays[this.shippingMethod]);
     this.estimatedDelivery = estimatedDate;
   }
+  
+  // Set escrow amount to total if new order
+  if (this.isNew && !this.escrowAmount) {
+    this.escrowAmount = this.total;
+  }
+  
   next();
 });
 
-// Indexes for better query performance
+// Post-save hook to add to vendor pending balance for new orders
+orderSchema.post('save', async function(doc) {
+  if (this.isNew && doc.escrowStatus === 'held' && doc.paymentStatus === 'completed') {
+    try {
+      await doc.addToVendorPending();
+    } catch (error) {
+      console.error('Error adding to vendor pending balance:', error);
+    }
+  }
+});
 orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ status: 1 });
@@ -237,6 +273,73 @@ orderSchema.methods.addTracking = function(trackingNumber, trackingUrl) {
   this.trackingUrl = trackingUrl;
   this.status = 'shipped';
   return this.save();
+};
+
+orderSchema.methods.releaseEscrow = async function() {
+  if (this.escrowStatus !== 'held') {
+    throw new Error('Escrow funds are not held');
+  }
+  
+  this.escrowStatus = 'released';
+  this.escrowReleaseDate = new Date();
+  
+  // Process vendor balance updates
+  const VendorBalance = mongoose.model('VendorBalance');
+  
+  // Group items by vendor and calculate amounts
+  const vendorAmounts = {};
+  this.items.forEach(item => {
+    const vendorId = item.vendor.toString();
+    const itemTotal = item.price * item.quantity;
+    
+    if (!vendorAmounts[vendorId]) {
+      vendorAmounts[vendorId] = 0;
+    }
+    vendorAmounts[vendorId] += itemTotal;
+  });
+  
+  // Update vendor balances
+  for (const [vendorId, amount] of Object.entries(vendorAmounts)) {
+    let vendorBalance = await VendorBalance.findOne({ vendor: vendorId });
+    if (vendorBalance) {
+      // Move from pending to available
+      vendorBalance.pendingBalance = Math.max(0, vendorBalance.pendingBalance - amount);
+      vendorBalance.availableBalance += amount;
+      vendorBalance.totalEarnings += amount;
+      await vendorBalance.save();
+    }
+  }
+  
+  return this.save();
+};
+
+orderSchema.methods.addToVendorPending = async function() {
+  if (this.escrowStatus !== 'held') {
+    return; // Only process held escrow
+  }
+  
+  const VendorBalance = mongoose.model('VendorBalance');
+  
+  // Group items by vendor and calculate amounts
+  const vendorAmounts = {};
+  this.items.forEach(item => {
+    const vendorId = item.vendor.toString();
+    const itemTotal = item.price * item.quantity;
+    
+    if (!vendorAmounts[vendorId]) {
+      vendorAmounts[vendorId] = 0;
+    }
+    vendorAmounts[vendorId] += itemTotal;
+  });
+  
+  // Add to vendor pending balances
+  for (const [vendorId, amount] of Object.entries(vendorAmounts)) {
+    let vendorBalance = await VendorBalance.findOne({ vendor: vendorId });
+    if (vendorBalance) {
+      vendorBalance.pendingBalance += amount;
+      await vendorBalance.save();
+    }
+  }
 };
 
 // Static methods

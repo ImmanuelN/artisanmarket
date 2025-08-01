@@ -16,12 +16,13 @@ router.get('/stats', requireAuth, asyncHandler(async (req, res) => {
   // Get total orders
   const totalOrders = await Order.countDocuments({ customer: userId });
 
-  // Get total spent
-  const orders = await Order.find({ customer: userId, status: { $in: ['delivered', 'completed'] } });
-  const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+  // Get total spent from all orders (not just completed ones for accurate tracking)
+  const orders = await Order.find({ customer: userId });
+  const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
 
-  // Get wishlist items count (placeholder - would need wishlist model)
-  const wishlistItems = 0; // TODO: Implement wishlist functionality
+  // For wishlist items, we'll need to get this from frontend since it's stored in localStorage
+  // This will be updated by the frontend when sending stats
+  const wishlistItems = req.query.wishlistCount ? parseInt(req.query.wishlistCount) : 0;
 
   // Get reviews count (placeholder - would need review model)
   const reviewsGiven = 0; // TODO: Implement review functionality
@@ -120,12 +121,30 @@ router.put('/password', requireAuth, [
 
 // Update customer avatar
 router.put('/avatar', requireAuth, asyncHandler(async (req, res) => {
-  // This would typically handle file upload
-  // For now, we'll just return a success message
+  // This endpoint should work with the upload middleware
+  // The actual file upload will be handled by the upload routes
+  // This endpoint will just update the user's avatar URL
+  
+  const { avatarUrl } = req.body;
+  
+  if (!avatarUrl) {
+    return res.status(400).json({
+      success: false,
+      message: 'Avatar URL is required'
+    });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: avatarUrl },
+    { new: true }
+  ).select('-password');
+
   res.json({
     success: true,
     message: 'Avatar updated successfully',
-    avatar: 'https://example.com/avatar.jpg' // Placeholder
+    avatar: avatarUrl,
+    user
   });
 }));
 
