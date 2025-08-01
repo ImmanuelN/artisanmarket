@@ -9,3 +9,5 @@ export { default as ProductCard } from './ProductCard';
 export { default as Cart } from './Cart';
 export { default as Wishlist } from './Wishlist';
 export { default as OrderStatus } from './OrderStatus';
+export { default as PaymentForm } from './PaymentForm';
+export { default as BankTransferForm } from './BankTransferForm';

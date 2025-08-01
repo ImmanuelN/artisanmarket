@@ -162,13 +162,21 @@ const vendorSchema = new mongoose.Schema({
       bankAccount: {
         accountNumber: String,
         routingNumber: String,
-        accountHolderName: String
+        accountHolderName: String,
+        bankName: String,
+        accountType: String
       },
       paypal: {
         email: String
       },
       stripe: {
         accountId: String
+      },
+      plaid: {
+        accessToken: String,
+        itemId: String,
+        accountId: String,
+        lastSync: Date
       }
     }
   },
@@ -256,6 +264,14 @@ vendorSchema.index({ 'verification.status': 1 })
 vendorSchema.index({ 'metrics.averageRating': -1 })
 vendorSchema.index({ isActive: 1 })
 vendorSchema.index({ storeName: 'text', storeDescription: 'text' })
+
+// Pre-save middleware to ensure payoutDetails is initialized
+vendorSchema.pre('save', function(next) {
+  if (!this.payoutDetails) {
+    this.payoutDetails = {};
+  }
+  next();
+})
 
 // Update metrics when vendor data changes
 vendorSchema.methods.updateMetrics = async function() {

@@ -24,6 +24,9 @@ import OrderHistory from './pages/OrderHistory'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import VendorDashboard from './pages/vendor/VendorDashboard'
+import VendorBankDashboard from './pages/vendor/VendorBankDashboard'
+import BankTestPage from './pages/vendor/BankTestPage'
+import CustomerDashboard from './pages/customer/CustomerDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -92,10 +95,27 @@ function App() {
             </ProtectedRoute>
           } />
           
+          {/* Customer Dashboard */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          } />
+          
           {/* Vendor Routes */}
           <Route path="/vendor/*" element={
             <ProtectedRoute role="vendor">
               <VendorDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/vendor-bank" element={
+            <ProtectedRoute role="vendor">
+              <VendorBankDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/vendor-bank-test" element={
+            <ProtectedRoute role="vendor">
+              <BankTestPage />
             </ProtectedRoute>
           } />
           

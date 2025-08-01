@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 import Order from '../models/Order.js';
@@ -110,8 +111,26 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     await product.save();
   }
 
+  // Generate order number
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  
+  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const orderCount = await Order.countDocuments({
+    createdAt: { $gte: today, $lt: tomorrow }
+  });
+  
+  const sequence = (orderCount + 1).toString().padStart(4, '0');
+  const orderNumber = `ORD-${year}${month}${day}-${sequence}`;
+
   // Create order
   const order = new Order({
+    orderNumber,
     customer: req.user.id,
     items: orderItems,
     shippingAddress,
@@ -121,7 +140,9 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     subtotal,
     shippingCost,
     tax,
-    total
+    total,
+    paymentStatus: req.body.paymentStatus || 'pending',
+    isPaid: req.body.paymentStatus === 'completed'
   });
 
   await order.save();
@@ -211,6 +232,47 @@ router.patch('/:id/tracking', requireAuth, asyncHandler(async (req, res) => {
     success: true,
     message: 'Tracking information updated successfully',
     order
+  });
+}));
+
+// Get vendor orders
+router.get('/vendor/orders', requireAuth, asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, status } = req.query;
+  const skip = (page - 1) * limit;
+
+  // Find vendor ID for the current user
+  const Vendor = mongoose.model('Vendor');
+  const vendor = await Vendor.findOne({ user: req.user.id });
+  
+  if (!vendor) {
+    return res.status(404).json({
+      success: false,
+      message: 'Vendor profile not found'
+    });
+  }
+
+  const query = { 'items.vendor': vendor._id };
+  if (status) {
+    query.status = status;
+  }
+
+  const orders = await Order.find(query)
+    .populate('customer', 'name email')
+    .populate('items.product', 'title images price')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+  const total = await Order.countDocuments(query);
+
+  res.json({
+    success: true,
+    orders,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      totalOrders: total
+    }
   });
 }));
 

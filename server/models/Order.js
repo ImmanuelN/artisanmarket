@@ -185,8 +185,11 @@ orderSchema.pre('save', async function(next) {
     
     // Get count of orders for today
     const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
     const orderCount = await this.constructor.countDocuments({
-      createdAt: { $gte: today }
+      createdAt: { $gte: today, $lt: tomorrow }
     });
     
     const sequence = (orderCount + 1).toString().padStart(4, '0');

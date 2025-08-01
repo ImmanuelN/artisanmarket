@@ -7,6 +7,7 @@ interface CardProps {
   className?: string;
   hover?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  onClick?: () => void;
 }
 
 interface CardHeaderProps {
@@ -40,7 +41,7 @@ const Card: React.FC<CardProps> & {
   Footer: React.FC<CardFooterProps>;
   Title: React.FC<CardTitleProps>;
   Description: React.FC<CardDescriptionProps>;
-} = ({ children, className, hover = false, padding = 'md' }) => {
+} = ({ children, className, hover = false, padding = 'md', onClick }) => {
   const paddingClasses = {
     none: '',
     sm: 'p-4',
@@ -62,6 +63,7 @@ const Card: React.FC<CardProps> & {
         hover && 'cursor-pointer',
         className
       )}
+      onClick={onClick}
       {...motionProps}
     >
       {children}

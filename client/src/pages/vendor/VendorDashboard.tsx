@@ -34,6 +34,7 @@ import {
   CameraIcon,
   TrashIcon,
   ArrowTopRightOnSquareIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
 import { Container, Card, Button, Badge, Input } from '../../components/ui'
@@ -49,6 +50,8 @@ import Modal from '../../components/ui/Modal';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ProductForm from '../../components/forms/ProductForm';
 import ProductManagementTab from './tabs/ProductManagementTab';
+import VendorBankDashboard from './VendorBankDashboard';
+import DashboardNavigation from '../../components/layout/DashboardNavigation';
 import { io } from 'socket.io-client';
 
 const VendorDashboard = () => {
@@ -64,6 +67,8 @@ const VendorDashboard = () => {
   const [nextTab, setNextTab] = useState('');
   const [addProductModalOpen, setAddProductModalOpen] = useState(false);
   const [vendorProducts, setVendorProducts] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   // Set initial form data when profile loads
   useEffect(() => {
@@ -103,13 +108,60 @@ const VendorDashboard = () => {
 
   const fetchVendorOrders = async () => {
     try {
-      const response = await api.get('/vendors/orders')
+      setOrdersLoading(true);
+      const response = await api.get('/orders/vendor/orders')
       if (response.data.success) {
         dispatch(setVendorOrders(response.data.orders))
       }
     } catch (error) {
       console.error('Error fetching vendor orders:', error)
       dispatch(setError('Failed to load orders'))
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  const fetchVendorOrdersWithFilter = async (status: string) => {
+    try {
+      setOrdersLoading(true);
+      const response = await api.get(`/orders/vendor/orders?status=${status}`)
+      if (response.data.success) {
+        dispatch(setVendorOrders(response.data.orders))
+      }
+    } catch (error) {
+      console.error('Error fetching vendor orders:', error)
+      dispatch(setError('Failed to load orders'))
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      const response = await api.patch(`/orders/${orderId}/status`, { status })
+      if (response.data.success) {
+        showSuccessNotification('Order status updated successfully')
+        fetchVendorOrders() // Refresh orders
+      }
+    } catch (error: any) {
+      console.error('Error updating order status:', error)
+      showErrorNotification(error.response?.data?.message || 'Failed to update order status')
+    }
+  }
+
+  const addTrackingInfo = async (orderId: string, trackingNumber: string, trackingUrl: string) => {
+    try {
+      const response = await api.patch(`/orders/${orderId}/tracking`, { 
+        trackingNumber, 
+        trackingUrl 
+      })
+      if (response.data.success) {
+        showSuccessNotification('Tracking information added successfully')
+        fetchVendorOrders() // Refresh orders
+      }
+    } catch (error: any) {
+      console.error('Error adding tracking info:', error)
+      showErrorNotification(error.response?.data?.message || 'Failed to add tracking information')
     }
   }
 
@@ -150,21 +202,51 @@ const VendorDashboard = () => {
   }, [user])
 
   useEffect(() => {
-    if (profile && profile._id) {
+    if (profile && profile._id && user?.role === 'vendor') {
       // 1. Fetch the initial product list
       fetchVendorProducts(profile._id);
 
-      // 2. Set up real-time updates
-      const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
-      socket.emit('join-vendor-room', profile._id);
-      socket.on('products-updated', (updatedProducts) => {
-        setVendorProducts(updatedProducts);
-      });
+      // 2. Set up real-time updates with error handling
+      let socket: any = null;
+      
+      try {
+        socket = io('http://localhost:5000', {
+          transports: ['websocket', 'polling'],
+          timeout: 5000,
+          reconnection: true,
+          reconnectionAttempts: 3,
+          reconnectionDelay: 1000,
+          forceNew: true
+        });
 
-      // Clean up on component unmount
-      return () => {
-        socket.disconnect();
-      };
+        socket.on('connect', () => {
+          console.log('Socket connected successfully');
+          setSocketConnected(true);
+          socket.emit('join-vendor-room', profile._id);
+        });
+
+        socket.on('connect_error', (error: any) => {
+          console.error('Socket connection error:', error);
+          setSocketConnected(false);
+        });
+
+        socket.on('error', (error: any) => {
+          console.error('Socket error:', error);
+          setSocketConnected(false);
+        });
+
+        socket.on('products-updated', (updatedProducts: any) => {
+          setVendorProducts(updatedProducts);
+        });
+
+        return () => {
+          if (socket) {
+            socket.disconnect();
+          }
+        };
+      } catch (error) {
+        console.error('Error setting up socket connection:', error);
+      }
     }
   }, [profile]);
 
@@ -309,6 +391,7 @@ const VendorDashboard = () => {
     { id: 'products', label: 'Products', icon: ShoppingBagIcon },
     { id: 'orders', label: 'Orders', icon: DocumentTextIcon },
     { id: 'analytics', label: 'Analytics', icon: ArrowTrendingUpIcon },
+    { id: 'bank', label: 'Bank & Payouts', icon: BanknotesIcon },
     { id: 'profile', label: 'Store Profile', icon: BuildingStorefrontIcon },
     { id: 'settings', label: 'Settings', icon: Cog6ToothIcon }
   ]
@@ -415,87 +498,65 @@ const VendorDashboard = () => {
   const currentOrders = orders
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
-      <Container>
-        <div className="py-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <img
-                    src={currentProfile?.logo || ''}
-                    alt={currentProfile?.storeName}
-                    className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-                  />
-                  {currentProfile?.verification?.status === 'approved' && (
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                    <CheckCircleIcon className="w-3 h-3 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 pb-20 md:pb-0">
+      <DashboardNavigation
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
+      
+      <div className="transition-all duration-300 ml-0 md:ml-70 pt-16 pb-20">
+        <Container>
+          <div className="py-8">
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img
+                      src={currentProfile?.logo || ''}
+                      alt={currentProfile?.storeName}
+                      className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                    {currentProfile?.verification?.status === 'approved' && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <CheckCircleIcon className="w-3 h-3 text-white" />
+                    </div>
+                    )}
                   </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {currentProfile?.storeName}
+                    </h1>
+                    <p className="text-gray-600 flex items-center mt-1">
+                      <BuildingStorefrontIcon className="w-4 h-4 mr-1" />
+                      {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'}
+                      • Member since {currentProfile?.createdAt ? new Date(currentProfile.createdAt).getFullYear() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  {currentProfile?._id && (
+                    <Link to={`/vendor/store/${currentProfile._id}`}>
+                  <Button variant="outline" size="sm">
+                    <EyeIcon className="w-4 h-4 mr-2" />
+                    View Store
+                  </Button>
+                    </Link>
                   )}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {currentProfile?.storeName}
-                  </h1>
-                  <p className="text-gray-600 flex items-center mt-1">
-                    <BuildingStorefrontIcon className="w-4 h-4 mr-1" />
-                    {(currentProfile as Store)?.verification?.status ? (currentProfile as Store)?.verification?.status === 'approved' ? 'Verified Vendor' : (currentProfile as Store)?.verification?.status.charAt(0).toUpperCase() + (currentProfile as Store)?.verification?.status.slice(1) : 'N/A'}
-                    • Member since {currentProfile?.createdAt ? new Date(currentProfile.createdAt).getFullYear() : 'N/A'}
-                  </p>
+
+                  <Button size="sm" onClick={handleAddProduct}>
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Add Product
+                  </Button>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                {currentProfile?._id && (
-                  <Link to={`/vendor/store/${currentProfile._id}`}>
-                <Button variant="outline" size="sm">
-                  <EyeIcon className="w-4 h-4 mr-2" />
-                  View Store
-                </Button>
-                  </Link>
-                )}
-
-                <Button size="sm" onClick={handleAddProduct}>
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  Add Product
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Tab Navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-8"
-          >
-            <div className="border-b border-gray-200 overflow-x-auto">
-              <nav className="flex space-x-8">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${activeTab === tab.id
-                          ? 'border-amber-500 text-amber-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span>{tab.label}</span>
-                    </button>
-                  )
-                })}
-              </nav>
-            </div>
-          </motion.div>
+            </motion.div>
 
           {/* Tab Content */}
           <AnimatePresence mode="wait">
@@ -605,19 +666,34 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentOrders?.slice(0, 3).map((order) => {
+                          {currentOrders && currentOrders.length > 0 ? currentOrders.slice(0, 3).map((order, index) => {
                             const StatusIcon = getStatusIcon(order.status)
                             return (
-                              <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div key={order._id || order.id || `order-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div className="flex items-center space-x-3">
                                   <img
                                     src={order.avatar}
-                                    alt={order.customer}
+                                    alt={typeof order.customer === 'object' 
+                                      ? (order.customer?.name || order.customer?.email || 'Customer')
+                                      : order.customer || 'Customer'
+                                    }
                                     className="w-10 h-10 rounded-full object-cover"
                                   />
                                   <div>
-                                    <p className="font-medium text-gray-900">{order.customer}</p>
-                                    <p className="text-sm text-gray-600">{order.items.join(', ')}</p>
+                                    <p className="font-medium text-gray-900">
+                                      {typeof order.customer === 'object' 
+                                        ? (order.customer?.name || order.customer?.email || 'Customer')
+                                        : order.customer || 'Customer'
+                                      }
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      {order.items?.map((item: any, index: number) => (
+                                        <span key={index}>
+                                          {item.product?.title || 'Unknown Product'}
+                                          {index < order.items.length - 1 ? ', ' : ''}
+                                        </span>
+                                      )) || 'No items'}
+                                    </p>
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -628,7 +704,11 @@ const VendorDashboard = () => {
                                 </div>
                               </div>
                             )
-                          })}
+                          }) : (
+                            <div className="text-center py-8">
+                              <p className="text-gray-500">No recent orders</p>
+                            </div>
+                          )}
                         </div>
                       </Card.Content>
                     </Card>
@@ -640,8 +720,8 @@ const VendorDashboard = () => {
                       </Card.Header>
                       <Card.Content>
                         <div className="space-y-4">
-                          {currentStats?.topProducts?.map((product, index) => (
-                            <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          {currentStats?.topProducts && currentStats.topProducts.length > 0 ? currentStats.topProducts.map((product, index) => (
+                            <div key={product.id || `product-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                                   <span className="font-bold text-amber-600">#{index + 1}</span>
@@ -656,7 +736,11 @@ const VendorDashboard = () => {
                                 <p className="text-sm text-gray-600">${product.price}</p>
                               </div>
                             </div>
-                          ))}
+                          )) : (
+                            <div className="text-center py-8">
+                              <p className="text-gray-500">No products yet</p>
+                            </div>
+                          )}
                         </div>
                       </Card.Content>
                     </Card>
@@ -680,11 +764,23 @@ const VendorDashboard = () => {
                   <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">Order Management</h2>
                     <div className="flex space-x-3">
-                      <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
-                        <option>All Orders</option>
-                        <option>Pending</option>
-                        <option>Shipped</option>
-                        <option>Delivered</option>
+                      <select 
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        onChange={(e) => {
+                          const status = e.target.value;
+                          if (status === 'all') {
+                            fetchVendorOrders();
+                          } else {
+                            fetchVendorOrdersWithFilter(status);
+                          }
+                        }}
+                      >
+                        <option value="all">All Orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
                   </div>
@@ -692,34 +788,129 @@ const VendorDashboard = () => {
                   <Card>
                     <Card.Content>
                       <div className="space-y-4">
-                        {currentOrders?.map((order) => {
-                          const StatusIcon = getStatusIcon(order.status)
-                          return (
-                            <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <img
-                                    src={order.avatar}
-                                    alt={order.customer}
-                                    className="w-12 h-12 rounded-full object-cover"
-                                  />
-                                  <div>
-                                    <h3 className="font-semibold text-gray-900">Order #{order.id}</h3>
-                                    <p className="text-gray-600">{order.customer}</p>
-                                    <p className="text-sm text-gray-500">{order.items.join(', ')}</p>
+                        {ordersLoading ? (
+                          <div className="text-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading orders...</p>
+                          </div>
+                        ) : currentOrders && Array.isArray(currentOrders) && currentOrders.length > 0 ? (
+                          currentOrders.map((order, index) => {
+                            const StatusIcon = getStatusIcon(order.status)
+                            return (
+                              <div key={order._id || `order-${index}`} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                                      <UserIcon className="w-6 h-6 text-amber-600" />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold text-gray-900">Order #{order.orderNumber}</h3>
+                                      <p className="text-gray-600">
+                                        {typeof order.customer === 'object' 
+                                          ? (order.customer?.name || order.customer?.email || 'Customer')
+                                          : order.customer || 'Customer'
+                                        }
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {order.items?.map((item: any, index: number) => (
+                                          <span key={index}>
+                                            {item.product?.title || 'Unknown Product'}
+                                            {index < order.items.length - 1 ? ', ' : ''}
+                                          </span>
+                                        )) || 'No items'}
+                                      </p>
+                                      <p className="text-xs text-gray-400">
+                                        {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-lg font-bold text-gray-900">${order.total?.toFixed(2)}</p>
+                                    <Badge variant={getStatusColor(order.status) as any}>
+                                      {order.status}
+                                    </Badge>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                      {order.items[index].quantity || 0} item{order.items[index].quantity !== 1 ? 's' : ''}
+                                    </p>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-lg font-bold text-gray-900">${order.total}</p>
-                                  <Badge color={getStatusColor(order.status) as any}>
-                                    {order.status}
-                                  </Badge>
-                                  <p className="text-sm text-gray-500 mt-1">{order.date}</p>
-                                </div>
+                                
+                                                                 {/* Order Details */}
+                                 <div className="mt-4 pt-4 border-t border-gray-100">
+                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                     <div>
+                                       <p className="font-medium text-gray-700">Shipping Address</p>
+                                       <p className="text-gray-600">
+                                         {order.shippingAddress?.firstName} {order.shippingAddress?.lastName}
+                                       </p>
+                                       <p className="text-gray-600">{order.shippingAddress?.address}</p>
+                                       <p className="text-gray-600">
+                                         {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zipCode}
+                                       </p>
+                                     </div>
+                                     <div>
+                                       <p className="font-medium text-gray-700">Payment Status</p>
+                                       <p className={`${order.paymentStatus === 'completed' ? 'text-green-600' : 'text-amber-600'}`}>
+                                         {order.paymentStatus === 'completed' ? 'Paid' : 'Pending'}
+                                       </p>
+                                     </div>
+                                     <div>
+                                       <p className="font-medium text-gray-700">Order Summary</p>
+                                       <p className="text-gray-600">Subtotal: ${order.subtotal?.toFixed(2)}</p>
+                                       <p className="text-gray-600">Shipping: ${order.shippingCost?.toFixed(2)}</p>
+                                       <p className="text-gray-600">Tax: ${order.tax?.toFixed(2)}</p>
+                                     </div>
+                                   </div>
+                                   
+                                   {/* Order Actions */}
+                                   <div className="mt-4 pt-4 border-t border-gray-100">
+                                     <div className="flex flex-wrap gap-2">
+                                       {/* Status Update */}
+                                       <select 
+                                         className="px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                         value={order.status}
+                                         onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                       >
+                                         <option value="pending">Pending</option>
+                                         <option value="processing">Processing</option>
+                                         <option value="shipped">Shipped</option>
+                                         <option value="delivered">Delivered</option>
+                                         <option value="cancelled">Cancelled</option>
+                                       </select>
+                                       
+                                                                               {/* Tracking Info */}
+                                        {order.status === 'shipped' && (
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline"
+                                            onClick={() => {
+                                              const trackingNumber = prompt('Enter tracking number:')
+                                              if (trackingNumber && trackingNumber.trim()) {
+                                                const trackingUrl = prompt('Enter tracking URL (optional):')
+                                                addTrackingInfo(order._id, trackingNumber.trim(), trackingUrl?.trim() || '')
+                                              } else if (trackingNumber !== null) {
+                                                showErrorNotification('Tracking number is required')
+                                              }
+                                            }}
+                                          >
+                                            <ArrowTopRightOnSquareIcon className="w-4 h-4 mr-1" />
+                                            Add Tracking
+                                          </Button>
+                                        )}
+                                      
+                                     </div>
+                                   </div>
+                                 </div>
                               </div>
-                            </div>
-                          )
-                        })}
+                            )
+                          })
+                        ) : (
+                          <div className="text-center py-12">
+                            <DocumentTextIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
+                            <p className="text-gray-600">Orders from your products will appear here.</p>
+                          </div>
+                        )}
                       </div>
                     </Card.Content>
                   </Card>
@@ -741,6 +932,11 @@ const VendorDashboard = () => {
                     </Card.Content>
                   </Card>
                 </div>
+              )}
+
+              {/* Bank & Payouts Tab */}
+              {activeTab === 'bank' && (
+                <VendorBankDashboard />
               )}
 
               {/* Profile Tab */}
@@ -1093,8 +1289,10 @@ const VendorDashboard = () => {
               )}
             </motion.div>
           </AnimatePresence>
-        </div>
-      </Container>
+          </div>
+        </Container>
+      </div>
+    
       {isDirty && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-amber-100 text-amber-800 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
           <ExclamationTriangleIcon className="w-6 h-6" />
@@ -1102,7 +1300,7 @@ const VendorDashboard = () => {
           <Button size="sm" onClick={handleSaveChanges} disabled={uploading.logo || uploading.banner}>
             {uploading.logo || uploading.banner ? 'Uploading...' : 'Save Changes'}
           </Button>
-    </div>
+        </div>
       )}
       <Modal
         isOpen={modalOpen}

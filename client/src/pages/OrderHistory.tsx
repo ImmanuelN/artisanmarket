@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  PackageIcon, 
+  CogIcon, 
   TruckIcon, 
   CheckCircleIcon, 
   ClockIcon,
@@ -13,12 +13,15 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   ArrowLeftIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  ShoppingBagIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { Container, Card, Button, Badge, OrderStatus } from '../components/ui';
 import { RootState } from '../store/store';
 import api from '../utils/api';
 import { showErrorNotification } from '../utils/notifications';
+import { Link } from 'react-router-dom';
 
 interface OrderItem {
   product: {
@@ -118,7 +121,7 @@ const OrderHistory = () => {
       case 'pending':
         return ClockIcon;
       case 'processing':
-        return PackageIcon;
+        return CogIcon;
       case 'shipped':
         return TruckIcon;
       case 'delivered':
@@ -249,7 +252,7 @@ const OrderHistory = () => {
             ) : orders.length === 0 ? (
               <Card>
                 <Card.Content className="text-center py-12">
-                  <PackageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <ShoppingBagIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-medium text-gray-900 mb-2">No orders found</h3>
                   <p className="text-gray-600 mb-6">
                     {statusFilter === 'all' 
@@ -257,9 +260,11 @@ const OrderHistory = () => {
                       : `No ${statusFilter} orders found.`
                     }
                   </p>
-                  <Button onClick={() => window.location.href = '/shop'}>
-                    Start Shopping
-                  </Button>
+                  <Link to="/shop">
+                    <Button>
+                      Start Shopping
+                    </Button>
+                  </Link>
                 </Card.Content>
               </Card>
             ) : (
@@ -499,7 +504,7 @@ const OrderHistory = () => {
               ) : (
                 <Card>
                   <Card.Content className="text-center py-8">
-                    <PackageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Select an Order</h3>
                     <p className="text-gray-600">Click on any order to view its details</p>
                   </Card.Content>

@@ -55,6 +55,9 @@ export default {
       maxWidth: {
         'container': '1280px',
       },
+      width: {
+        '70': '280px',
+      },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
