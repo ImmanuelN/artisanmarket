@@ -180,57 +180,6 @@ const About = () => {
         </Container>
       </section>
 
-      {/* Team Section */}
-      <section className="py-16 lg:py-24 bg-white">
-        <Container>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Meet Our Team
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Passionate individuals dedicated to connecting the world with exceptional artisan craftsmanship.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {team.map((member, index) => (
-              <motion.div
-                key={member.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Card hover className="text-center">
-                  <Card.Content>
-                    <div className="mb-6">
-                      <img
-                        src={member.image}
-                        alt={member.name}
-                        className="w-24 h-24 rounded-full mx-auto object-cover mb-4"
-                      />
-                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                        {member.name}
-                      </h3>
-                      <p className="text-amber-600 font-medium mb-3">
-                        {member.role}
-                      </p>
-                      <p className="text-gray-600 text-sm leading-relaxed">
-                        {member.bio}
-                      </p>
-                    </div>
-                  </Card.Content>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-r from-amber-500 to-amber-600">
         <Container>

@@ -67,51 +67,51 @@ const Home = () => {
 
 
   const heroImages = [
-    'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=600&fit=crop',
-    'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&h=600&fit=crop'
+    'https://images.unsplash.com/photo-1673339066872-39b9f5bdb48b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1623295291831-4565f0879150?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    'https://images.unsplash.com/photo-1611955167811-4711904bb9f8?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   ];
 
   // Updated categories to match Product model enum values
   const categories = [
     {
       name: 'Ceramics',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1595351298020-038700609878?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 150,
       color: 'from-orange-400 to-orange-600',
       slug: 'ceramics'
     },
     {
       name: 'Jewelry',
-      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1531995811006-35cb42e1a022?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 234,
       color: 'from-purple-400 to-purple-600',
       slug: 'jewelry'
     },
     {
       name: 'Leather Goods',
-      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1711915506137-dd9e9b3488a1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 89,
       color: 'from-amber-400 to-amber-600',
       slug: 'leather-goods'
     },
     {
       name: 'Textiles',
-      image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1562869929-bda0650edb1f?q=80&w=1184&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 178,
       color: 'from-emerald-400 to-emerald-600',
       slug: 'textiles'
     },
     {
       name: 'Woodwork',
-      image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1547609434-b732edfee020?q=80&w=1144&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 95,
       color: 'from-rose-400 to-rose-600',
       slug: 'woodwork'
     },
     {
       name: 'Glass',
-      image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=300&fit=crop',
+      image: 'https://images.unsplash.com/photo-1677137340058-a0c01a4c0a5a?q=80&w=1032&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       count: 67,
       color: 'from-blue-400 to-blue-600',
       slug: 'glass'
@@ -265,7 +265,6 @@ const Home = () => {
                       className="w-full h-48 object-cover"
                     />
                     <Card.Content>
-                      <Badge variant="success" className="mb-2">Featured</Badge>
                       <h3 className="font-semibold text-gray-900">Artisan Pottery</h3>
                       <p className="text-sm text-gray-600">Handmade ceramics</p>
                     </Card.Content>
