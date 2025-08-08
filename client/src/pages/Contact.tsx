@@ -41,19 +41,19 @@ const Contact = () => {
     {
       icon: PhoneIcon,
       title: 'Call Us',
-      details: '+1 (555) 123-4567',
+      details: '+264 61 123 4567',
       description: 'Mon-Fri from 8am to 5pm'
     },
     {
       icon: MapPinIcon,
       title: 'Visit Us',
-      details: '123 Artisan Street, Creative District',
-      description: 'New York, NY 10001'
+      details: '123 Independence Avenue, City Center',
+      description: 'Windhoek, Namibia'
     },
     {
       icon: ClockIcon,
       title: 'Business Hours',
-      details: 'Mon-Fri: 8am-5pm EST',
+      details: 'Mon-Fri: 8am-5pm CAT',
       description: 'Weekend support via email'
     }
   ]
@@ -241,11 +241,21 @@ const Contact = () => {
               {/* Map Placeholder */}
               <Card>
                 <Card.Content>
-                  <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPinIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-600">Interactive Map</p>
-                      <p className="text-sm text-gray-500">123 Artisan Street, New York</p>
+                  <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center relative overflow-hidden">
+                    {/* Embedded Google Maps for Windhoek */}
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d228994.83700276395!2d17.03493754724121!3d-22.58957109375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1c7573c3e2b3b1a1%3A0x5c4e8a0b7d1d8e8f!2sWindhoek%2C%20Namibia!5e0!3m2!1sen!2s!4v1691424000000!5m2!1sen!2s"
+                      className="w-full h-full rounded-lg border-0"
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="ArtisanMarket Location - Windhoek, Namibia"
+                    ></iframe>
+                    <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
+                      <div className="flex items-center space-x-2">
+                        <MapPinIcon className="w-4 h-4 text-amber-600" />
+                        <p className="text-sm font-medium text-gray-900">Windhoek, Namibia</p>
+                      </div>
                     </div>
                   </div>
                 </Card.Content>

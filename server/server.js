@@ -36,6 +36,7 @@ import customerBalanceRoutes from './routes/customerBalanceRoutes.js'
 import customerRoutes from './routes/customerRoutes.js'
 import deliveryProofRoutes from './routes/deliveryProofRoutes.js'
 import mockApiRoutes from './routes/mockApi.js'
+import keepAliveService from './utils/keepAliveService.js'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -292,7 +293,8 @@ app.get('/health', (req, res) => {
     services: {
       plaid: plaidStatus,
       stripe: stripeStatus
-    }
+    },
+    keepAlive: keepAliveService.getStatus()
   }
   
   console.log('🩺 Health check requested:', healthData)
@@ -306,6 +308,31 @@ app.get('/ping', (req, res) => {
     timestamp: new Date().toISOString(),
     server: 'artisan-market-api'
   })
+})
+
+// Keep-alive service endpoints
+app.get('/api/keep-alive/status', (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: keepAliveService.getStatus()
+  })
+})
+
+app.post('/api/keep-alive/trigger', async (req, res) => {
+  try {
+    const status = await keepAliveService.triggerImmediate()
+    res.status(200).json({
+      success: true,
+      message: 'Keep-alive activity triggered successfully',
+      data: status
+    })
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger keep-alive activity',
+      error: error.message
+    })
+  }
 })
 
 // API routes
@@ -431,6 +458,13 @@ server.listen(PORT, () => {
   console.log(`   💳 Stripe: ${stripeStatus}`)
   console.log(`   🔌 Socket.IO: ✅ Ready`)
   console.log('')
+  
+  // Start keep-alive service
+  const keepAliveInterval = process.env.KEEP_ALIVE_INTERVAL_HOURS || 2
+  keepAliveService.start(keepAliveInterval)
+  console.log(`   ⚡ Keep-Alive: ✅ Started (${keepAliveInterval}h interval)`)
+  console.log('')
+  
   console.log('✨ Ready to handle requests!')
   console.log('=' * 50)
 })
