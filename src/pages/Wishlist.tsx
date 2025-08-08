@@ -1,4 +1,4 @@
-import React from 'react';
+// ...existing code...
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { TrashIcon, ArrowLeftIcon, HeartIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
@@ -63,35 +63,41 @@ const Wishlist = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {items.map((item, index) => (
-            <div key={item._id} className="relative group">
-              <ProductCard
-                product={item}
-                variant="compact"
-                showWishlist={false}
-                showAddToCart={false}
-                index={index}
-              />
-              
-              {/* Custom overlay with actions */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
-                <button
-                  onClick={() => handleMoveToCart(item)}
-                  className="w-10 h-10 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors"
-                  title="Move to cart"
-                >
-                  <ShoppingBagIcon className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleRemoveItem(item._id)}
-                  className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                  title="Remove from wishlist"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+          {items.map((item, index) => {
+            // Ensure 'description' property exists for ProductCard
+            const productWithDescription = {
+              ...item,
+              description: item.description || 'No description available.'
+            };
+            return (
+              <div key={item._id} className="relative group">
+                <ProductCard
+                  product={productWithDescription}
+                  variant="compact"
+                  showWishlist={false}
+                  showAddToCart={false}
+                  index={index}
+                />
+                {/* Custom overlay with actions */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
+                  <button
+                    onClick={() => handleMoveToCart(item)}
+                    className="w-10 h-10 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors"
+                    title="Move to cart"
+                  >
+                    <ShoppingBagIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveItem(item._id)}
+                    className="w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    title="Remove from wishlist"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Bulk Actions */}

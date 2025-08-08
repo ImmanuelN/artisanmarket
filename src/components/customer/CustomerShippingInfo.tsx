@@ -140,13 +140,12 @@ const CustomerShippingInfo = () => {
     const setTargetErrors = isUpdate ? setUpdateErrors : setErrors;
     
     let formattedValue = value;
-    
     // Handle checkbox for isDefault
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      formattedValue = checked;
+      // Assign string 'true' or 'false' to match expected type
+      formattedValue = checked ? 'true' : 'false';
     }
-    
     setTargetFormData(prev => ({ ...prev, [name]: formattedValue }));
     
     // Clear error when user starts typing
@@ -255,7 +254,7 @@ const CustomerShippingInfo = () => {
       state: address.state,
       zipCode: address.zipCode,
       country: address.country,
-      addressType: address.addressType,
+      addressType: address.addressType as 'home' | 'work' | 'other',
       isDefault: address.isDefault
     });
     setShowUpdateModal(true);

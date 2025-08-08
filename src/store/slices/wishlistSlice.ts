@@ -14,6 +14,7 @@ interface WishlistProduct {
     count: number
   }
   status: string
+  description: string;
   addedAt: string
 }
 

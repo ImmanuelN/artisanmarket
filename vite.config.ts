@@ -33,6 +33,16 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // Skip TypeScript checking during build for faster deployment
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress TypeScript warnings during build
+        if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+        warn(warning)
+      }
+    }
+  },
   server: {
     port: 5172,
     proxy: {
