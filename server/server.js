@@ -187,22 +187,32 @@ app.use('/api/', limiter)
 // CORS configuration with debugging
 const corsOptions = {
   origin: function (origin, callback) {
+    // Production origins from environment variables
+    const envOrigins = process.env.CORS_ORIGINS 
+      ? process.env.CORS_ORIGINS.split(',').map(url => url.trim())
+      : []
+    
     const allowedOrigins = [
       process.env.CLIENT_URL || "http://localhost:5172",
       "http://localhost:5172",
       "http://localhost:3000", // Common React dev port
       "http://127.0.0.1:5172",
-      "http://127.0.0.1:3000"
+      "http://127.0.0.1:3000",
+      ...envOrigins // Add production origins
     ]
     
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true)
     
     if (allowedOrigins.indexOf(origin) !== -1) {
-      console.log(`✅ CORS: Allowing origin ${origin}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ CORS: Allowing origin ${origin}`)
+      }
       callback(null, true)
     } else {
-      console.error(`❌ CORS: Blocking origin ${origin}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ CORS: Blocking origin ${origin}`)
+      }
       console.log(`   Allowed origins: ${allowedOrigins.join(', ')}`)
       callback(new Error('Not allowed by CORS'))
     }

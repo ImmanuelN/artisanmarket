@@ -1,21 +1,33 @@
-# Backend Dockerfile
+# Backend Dockerfile for Production
 FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodeuser -u 1001
+
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --silent
+RUN npm ci --only=production --silent && npm cache clean --force
 
 # Copy source code
 COPY . .
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Create uploads directory with proper permissions
+RUN mkdir -p uploads logs
+RUN chown -R nodeuser:nodejs /app
+
+# Switch to non-root user
+USER nodeuser
 
 # Expose port
 EXPOSE 5000
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:5000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
 # Start the application
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
