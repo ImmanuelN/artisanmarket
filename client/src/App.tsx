@@ -37,6 +37,7 @@ import { Help, Shipping, Returns, FAQ, Privacy, Terms, Cookies } from './pages/P
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import AuthGuard from './components/auth/AuthGuard'
 import OnboardingGuard from './components/vendor/OnboardingGuard'
 import StorePage from './pages/vendor/StorePage'
 
@@ -80,8 +81,16 @@ function App() {
           <Route path="/cookies" element={<Cookies />} />
           
           {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={
+            <AuthGuard redirectIfAuthenticated={true}>
+              <Login />
+            </AuthGuard>
+          } />
+          <Route path="/register" element={
+            <AuthGuard redirectIfAuthenticated={true}>
+              <Register />
+            </AuthGuard>
+          } />
           
           {/* Protected Routes */}
           <Route path="/checkout" element={

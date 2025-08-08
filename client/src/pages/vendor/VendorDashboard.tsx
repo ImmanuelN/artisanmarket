@@ -29,7 +29,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import { RootState, AppDispatch } from '../../store/store'
-import { Container, Card, Button, Badge, Input, Modal } from '../../components/ui'
+import { Container, Card, Button, Badge, Input, Modal, DashboardLoading } from '../../components/ui'
 import { setVendorProfile, setVendorStats, setVendorOrders, setLoading, setError } from '../../store/slices/vendorSlice'
 import api from '../../utils/api'
 import { Store } from '../../types/stores';
@@ -46,7 +46,7 @@ import VendorBankDashboard from './VendorBankDashboard';
 const VendorDashboard = () => {
   const dispatch = useDispatch<AppDispatch>()
   const { user } = useSelector((state: RootState) => state.auth)
-  const { profile, products, stats, orders, loading } = useSelector((state: RootState) => state.vendor)
+  const { profile, stats, orders, loading } = useSelector((state: RootState) => state.vendor)
   
   const [activeTab, setActiveTab] = useState('overview')
   const [profileData, setProfileData] = useState<Store | null>(null)
@@ -60,6 +60,7 @@ const VendorDashboard = () => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [vendorBalance, setVendorBalance] = useState<any>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [ordersPagination, setOrdersPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -355,6 +356,13 @@ const VendorDashboard = () => {
       fetchVendorStats()
       fetchVendorOrders()
       fetchVendorBalance()
+      
+      // Show loading for 3 seconds to simulate reconnecting service
+      const loadingTimer = setTimeout(() => {
+        setIsInitialLoading(false)
+      }, 3000)
+      
+      return () => clearTimeout(loadingTimer)
     }
   }, [user])
 
@@ -653,6 +661,11 @@ const VendorDashboard = () => {
   const currentProfile = profile as unknown as Store
   const currentStats = stats
   const currentOrders = orders
+
+  // Show loading screen for 3 seconds when dashboard first loads
+  if (isInitialLoading) {
+    return <DashboardLoading userType="vendor" />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 pb-20 md:pb-0">

@@ -7,7 +7,7 @@ import { AppDispatch } from '../../store/store';
 import { register } from '../../store/slices/authSlice';
 import { validateRegistration, ValidationError } from '../../utils/validation';
 import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
-import { Container, Button, Input, Card, Logo } from '../../components/ui';
+import { Container, Button, Input, Card } from '../../components/ui';
 
 const Register = () => {
   const [formData, setFormData] = useState({

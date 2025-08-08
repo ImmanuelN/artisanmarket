@@ -97,9 +97,11 @@ const About = () => {
                   Explore Artisans
                 </Button>
               </Link>
-              <Button variant="outline" size="lg">
-                Our Story
-              </Button>
+              <a href="https://youtube.com/watch?v=example" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="lg">
+                  Our Story
+                </Button>
+              </a>
             </div>
           </motion.div>
         </Container>

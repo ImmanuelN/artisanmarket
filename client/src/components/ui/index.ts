@@ -12,3 +12,4 @@ export { default as OrderStatus } from './OrderStatus';
 export { default as OrderStatusTracker } from './OrderStatusTracker';
 export { default as PaymentForm } from './PaymentForm';
 export { default as BankTransferForm } from './BankTransferForm';
+export { default as DashboardLoading } from './DashboardLoading';

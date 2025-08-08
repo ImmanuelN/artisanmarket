@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,22 +7,14 @@ import {
   CreditCardIcon,
   TruckIcon,
   Cog6ToothIcon,
-  ShieldCheckIcon,
-  BellIcon,
-  KeyIcon,
   HeartIcon,
   ShoppingBagIcon,
   DocumentTextIcon,
   BanknotesIcon,
-  MapPinIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  HomeIcon,
-  BuildingOfficeIcon
+  HomeIcon
 } from '@heroicons/react/24/outline';
-import { Container, Card, Button, Badge } from '../../components/ui';
+import { Container, Card, Button, Badge, DashboardLoading } from '../../components/ui';
 import { RootState } from '../../store/store';
-import { showSuccessNotification, showErrorNotification } from '../../utils/notifications';
 import api from '../../utils/api';
 import CustomerProfileSettings from '../../components/customer/CustomerProfileSettings';
 import CustomerBankingInfo from '../../components/customer/CustomerBankingInfo';
@@ -45,7 +37,7 @@ const CustomerDashboard = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState<CustomerStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Handle tab parameter from URL
   useEffect(() => {
@@ -72,24 +64,33 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     fetchCustomerStats();
+    
+    // Show loading for 3 seconds to simulate reconnecting service
+    const loadingTimer = setTimeout(() => {
+      setIsInitialLoading(false)
+    }, 3000)
+    
+    return () => clearTimeout(loadingTimer)
   }, [wishlistItems.length]); // Re-fetch when wishlist changes
 
   const fetchCustomerStats = async () => {
     try {
-      setLoading(true);
       // Send wishlist count as query parameter
       const response = await api.get(`/customers/stats?wishlistCount=${wishlistItems.length}`);
       setStats(response.data.stats);
     } catch (error) {
       console.error('Error fetching customer stats:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
   };
+
+  // Show loading screen for 3 seconds when dashboard first loads
+  if (isInitialLoading) {
+    return <DashboardLoading userType="customer" />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 pb-20 md:pb-0">

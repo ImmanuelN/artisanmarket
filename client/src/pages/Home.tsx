@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch} from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -14,9 +14,9 @@ import {
   CreditCardIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
-import { RootState, AppDispatch } from '../store/store';
+import { AppDispatch } from '../store/store';
 import { fetchFeaturedProducts } from '../store/slices/productSlice';
-import { Container, Card, Button, Badge, ProductCard } from '../components/ui';
+import { Container, Card, Button, ProductCard } from '../components/ui';
 import api from '../utils/api';
 
 interface Product {
@@ -147,21 +147,21 @@ const Home = () => {
     {
       name: 'Sarah Mitchell',
       role: 'Interior Designer',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
+      image: 'https://plus.unsplash.com/premium_photo-1675425206297-2f34477431b1?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       quote: 'The quality of craftsmanship is exceptional. Every piece tells a story and adds character to my designs.',
       rating: 5
     },
     {
-      name: 'David Chen',
+      name: 'David Thomas',
       role: 'Art Collector',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+      image: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       quote: 'ArtisanMarket has become my go-to source for unique, authentic pieces that you cannot find anywhere else.',
       rating: 5
     },
     {
       name: 'Maria Rodriguez',
       role: 'Home Decorator',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+      image: 'https://images.unsplash.com/photo-1643068470633-aef46b5ce574?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       quote: 'Supporting artisans while decorating my home has never been easier. The platform is intuitive and the quality is outstanding.',
       rating: 5
     }
@@ -222,10 +222,12 @@ const Home = () => {
                     <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="group">
-                  <PlayIcon className="w-5 h-5 mr-2" />
-                  Watch Our Story
-                </Button>
+                <a target="_blank" rel="noopener noreferrer" href="https://youtube.com/watch?v=example">
+                  <Button variant="outline" size="lg" className="group">
+                    <PlayIcon className="w-5 h-5 mr-2" />
+                    Watch Our Story
+                  </Button>
+                </a>
               </div>
 
               {/* Mini Stats */}

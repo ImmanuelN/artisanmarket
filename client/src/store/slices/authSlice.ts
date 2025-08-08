@@ -17,6 +17,8 @@ interface AuthState {
   token: string | null
   isLoading: boolean
   error: string | null
+  isReconnecting: boolean
+  isInitialized: boolean
 }
 
 const initialState: AuthState = {
@@ -24,6 +26,8 @@ const initialState: AuthState = {
   token: localStorage.getItem('token'),
   isLoading: false,
   error: null,
+  isReconnecting: false,
+  isInitialized: false,
 }
 
 const authSlice = createSlice({
@@ -52,6 +56,12 @@ const authSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null
+    },
+    setReconnecting: (state, action: PayloadAction<boolean>) => {
+      state.isReconnecting = action.payload
+    },
+    setInitialized: (state, action: PayloadAction<boolean>) => {
+      state.isInitialized = action.payload
     },
   },
   extraReducers: (builder) => {
@@ -95,15 +105,20 @@ const authSlice = createSlice({
       // checkAuth
       .addCase(checkAuth.pending, (state) => {
         state.isLoading = true;
+        state.isReconnecting = true;
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isReconnecting = false;
+        state.isInitialized = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.error = null;
       })
       .addCase(checkAuth.rejected, (state) => {
         state.isLoading = false;
+        state.isReconnecting = false;
+        state.isInitialized = true;
         state.user = null;
         state.token = null;
         state.error = null;
@@ -117,6 +132,8 @@ export const {
   loginFailure,
   updateUser,
   clearError,
+  setReconnecting,
+  setInitialized,
 } = authSlice.actions
 
 // Async thunks
