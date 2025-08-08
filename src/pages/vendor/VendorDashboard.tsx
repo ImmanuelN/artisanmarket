@@ -217,7 +217,7 @@ const VendorDashboard = () => {
       setUploadingProof(true);
       
       // First upload image to ImageKit
-      const authResponse = await fetch('/api/upload/imagekit-auth', {
+      const authResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/imagekit-auth`, {
         method: 'POST',
       });
 
@@ -375,7 +375,7 @@ const VendorDashboard = () => {
       let socket: any = null;
       
       try {
-        socket = io('http://localhost:5000', {
+        socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
           transports: ['websocket', 'polling'],
           timeout: 5000,
           reconnection: true,
@@ -616,7 +616,7 @@ const VendorDashboard = () => {
       reader.readAsDataURL(files[0]);
 
       try {
-        const authResponse = await fetch('/api/upload/imagekit-auth', {
+        const authResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/imagekit-auth`, {
           method: 'POST',
         });
 

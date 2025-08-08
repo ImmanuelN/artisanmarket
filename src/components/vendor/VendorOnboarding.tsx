@@ -118,7 +118,7 @@ const VendorOnboarding: React.FC<VendorOnboardingProps> = ({ onComplete }) => {
       reader.readAsDataURL(files[0])
 
       try {
-        const authResponse = await fetch('/api/upload/imagekit-auth', {
+        const authResponse = await fetch(`${import.meta.env.VITE_API_URL}/upload/imagekit-auth`, {
           method: 'POST',
         })
 
