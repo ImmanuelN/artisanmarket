@@ -27,7 +27,6 @@ import VendorDashboard from './pages/vendor/VendorDashboard'
 import VendorBankDashboard from './pages/vendor/VendorBankDashboard'
 import BankTestPage from './pages/vendor/BankTestPage'
 import CustomerDashboard from './pages/customer/CustomerDashboard'
-import AdminDashboard from './pages/admin/AdminDashboard'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import WhyBecomeVendor from './pages/WhyBecomeVendor'
@@ -134,15 +133,7 @@ function App() {
               </OnboardingGuard>
             </ProtectedRoute>
           } />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={
-            <ProtectedRoute role="admin">
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
 
-          
         </Routes>
       </motion.main>
       

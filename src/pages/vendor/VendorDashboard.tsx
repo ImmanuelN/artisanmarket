@@ -375,7 +375,9 @@ const VendorDashboard = () => {
       let socket: any = null;
       
       try {
-        socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+        // Socket.IO connects to the base server URL, not the /api endpoint
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+        socket = io(socketUrl, {
           transports: ['websocket', 'polling'],
           timeout: 5000,
           reconnection: true,
@@ -1133,8 +1135,6 @@ const VendorDashboard = () => {
                                                const now = new Date().getTime();
                                                const timeDiffMinutes = (now - uploadTime) / (1000 * 60);
                                                const canReupload = timeDiffMinutes < 15;
-                                               
-                                               console.log('Upload time:', new Date(uploadTime), 'Now:', new Date(now), 'Diff minutes:', timeDiffMinutes, 'Can reupload:', canReupload);
                                                
                                                return canReupload ? (
                                                  <Button 
