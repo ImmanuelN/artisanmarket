@@ -53,7 +53,7 @@ const Home = () => {
   const fetchRealFeaturedProducts = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/products?featured=true&limit=6');
+      const response = await api.get('/products?featured=true&limit=8');
       if (response.data.success) {
         setRealFeaturedProducts(response.data.products);
       }
