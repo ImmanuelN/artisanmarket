@@ -50,9 +50,20 @@ The pipeline in `.github/workflows/pipeline.yml` applies these controls cumulati
 | T9 | Client-side route guards | Elevation of Privilege | Hiding vendor or admin routes in the SPA is presentation only; the bundle can be read and any route reached directly | Not a client-side control — every privileged action is authorised server-side by the API. Recorded here so it is not mistaken for a mitigation |
 
 T1 is the live "before" case for Chapter 5 in this repository: token-in-`localStorage`
-is a real, currently-shipping design decision that the Code-stage SAST gate flags, kept
-in place so the chapter has a genuine finding to report and remediate. T8 is a staged
-control — the pipeline steps exist and self-activate as soon as those artifacts land.
+is a real, currently-shipping design decision, flagged at three call sites in
+`src/store/slices/authSlice.ts` (lines 46, 148 and 182) by the Code-stage ESLint
+security ruleset. Running `npm run lint` reproduces the list, which is the measured
+"before" figure for the remediation chapter. T8 is a staged control — the pipeline
+steps exist and self-activate as soon as those artifacts land.
+
+### Code-stage ruleset
+
+`.eslintrc.cjs` is scoped so that a red Code stage always means a security finding:
+security rules are errors, while stylistic and correctness noise is turned off (the
+`lint` script runs with `--max-warnings 0`, so warnings would otherwise fail the gate
+for non-security reasons). Alongside T1 it blocks `dangerouslySetInnerHTML` and
+`innerHTML` assignment (T2), secret-looking `VITE_*` variables (T3), and `eval`/
+`Function` construction.
 
 ## Sign-off
 
