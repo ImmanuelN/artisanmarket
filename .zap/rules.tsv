@@ -1,0 +1,24 @@
+# OWASP ZAP baseline rule configuration — ArtisanMarket client (Staging stage, 4.3.7)
+#
+# Format: <rule id>\t<IGNORE|WARN|FAIL>\t<justification>
+#
+# Scope note: the DAST target in CI is `vite preview`, a static file server for
+# the built SPA. Response-header policy (CSP, HSTS, X-Frame-Options, Permissions
+# Policy, COEP) is applied at the CDN / static host in front of the bundle, not
+# by the bundle itself — see threat T5 in docs/threat-model.md. Those rules are
+# therefore scoped out of this scan rather than silently passed: T5 records that
+# they must be verified against the deployed host, which this job does not cover.
+#
+# Everything not listed here stays at its default severity, so any genuine
+# application-layer finding (XSS, injection, disclosure) still fails the gate.
+
+10020	IGNORE	Anti-clickjacking header — set by the static host, not the bundle (T5)
+10021	IGNORE	X-Content-Type-Options — set by the static host, not the bundle (T5)
+10038	IGNORE	Content Security Policy — set by the static host, not the bundle (T5)
+10055	IGNORE	CSP directive fallback — follows from 10038; host-layer policy (T5)
+10063	IGNORE	Permissions Policy — set by the static host, not the bundle (T5)
+90004	IGNORE	Cross-Origin-Embedder-Policy — set by the static host, not the bundle (T5)
+10049	IGNORE	Storable/cacheable content — expected for immutable hashed static assets
+10096	IGNORE	Timestamp disclosure — matches build hashes and numeric literals in the bundle
+10109	IGNORE	Modern Web Application — informational; the target is a React SPA by design
+90003	IGNORE	Sub Resource Integrity — assets are same-origin and content-hashed by Vite
