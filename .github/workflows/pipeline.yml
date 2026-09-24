@@ -257,7 +257,7 @@ jobs:
           npx --yes wait-on http://127.0.0.1:4173 --timeout 60000
 
       - name: OWASP ZAP baseline scan (DAST)
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: "http://127.0.0.1:4173"
           # Host-layer header rules are scoped out with a documented
