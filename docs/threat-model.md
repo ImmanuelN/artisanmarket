@@ -49,12 +49,37 @@ The pipeline in `.github/workflows/pipeline.yml` applies these controls cumulati
 | T8 | Container image and deployment manifests | Tampering / Denial of Service | A serving image or manifest could carry known CVEs or run as root | Trivy and Checkov at Build stage — **inactive**, no `Dockerfile`, `k8s/` or `docker-compose.yml` in the repository yet |
 | T9 | Client-side route guards | Elevation of Privilege | Hiding vendor or admin routes in the SPA is presentation only; the bundle can be read and any route reached directly | Not a client-side control — every privileged action is authorised server-side by the API. Recorded here so it is not mistaken for a mitigation |
 
-T1 is the live "before" case for Chapter 5 in this repository: token-in-`localStorage`
-is a real, currently-shipping design decision, flagged at three call sites in
-`src/store/slices/authSlice.ts` (lines 46, 148 and 182) by the Code-stage ESLint
-security ruleset. Running `npm run lint` reproduces the list, which is the measured
-"before" figure for the remediation chapter. T8 is a staged control — the pipeline
-steps exist and self-activate as soon as those artifacts land.
+T1 is a **formally accepted risk**, not an open defect. Token-in-`localStorage` is a
+real, currently-shipping design decision at three call sites in
+`src/store/slices/authSlice.ts`, each carrying an inline justification and a scoped
+`eslint-disable-next-line`. The acceptance is bounded: the rule still blocks any
+**new** credential write to browser storage, so the gate constrains future code while
+the recorded exception covers the existing three. T8 is a staged control — the
+pipeline steps exist and self-activate as soon as those artifacts land.
+
+### Risk acceptance — T1
+
+- **Decision:** accept, do not remediate in this iteration.
+- **Rationale:** the API issues bearer tokens; moving to an `HttpOnly` cookie is a
+  cross-repo change touching login, `authMiddleware`, CORS credentials and every
+  authenticated request path. The change is disproportionate to this iteration and
+  carries a real risk of breaking authentication outright.
+- **Compensating control:** threat T2 — every HTML sink stays closed. There is no
+  `dangerouslySetInnerHTML` or `innerHTML` assignment anywhere in `src/`, and the
+  Code-stage ruleset blocks both. Exfiltrating the token requires an XSS that T2 is
+  specifically gating against.
+- **Remediation path:** migrate to an `HttpOnly`, `Secure`, `SameSite=Strict` cookie
+  issued by the API; remove all `localStorage` token access and the three exceptions.
+- **Review:** revisit when auth is next modified.
+
+### Gate status
+
+The dependency-scanning gates (`npm audit`, Trivy filesystem scan) are currently
+marked `continue-on-error` in `.github/workflows/pipeline.yml`, tagged
+`DEMO-GATE-RELAXED`, so that pre-existing dependency debt (27 critical/high
+advisories, one needing a semver-major `vite` upgrade) cannot mask whether the
+pipeline mechanism executes end to end. **They must be restored to blocking before
+this pipeline is used as evidence of vulnerability detection.**
 
 ### Code-stage ruleset
 

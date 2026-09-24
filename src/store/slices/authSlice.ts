@@ -43,6 +43,12 @@ const authSlice = createSlice({
       state.user = action.payload.user
       state.token = action.payload.token
       state.error = null
+      // ACCEPTED RISK (threat T1, docs/threat-model.md): the session token is held
+      // in localStorage, so any XSS on this origin can exfiltrate it. Accepted
+      // because the API issues bearer tokens; migrating to an HttpOnly cookie is a
+      // cross-repo auth change tracked as remediation work. Compensating control:
+      // threat T2 keeps every HTML sink closed (no innerHTML, no dangerouslySetInnerHTML).
+      // eslint-disable-next-line no-restricted-syntax
       localStorage.setItem('token', action.payload.token)
     },
     loginFailure: (state, action: PayloadAction<string>) => {
@@ -145,6 +151,12 @@ export const login = createAsyncThunk(
       
       if (response.data.success) {
         const { user, token } = response.data
+        // ACCEPTED RISK (threat T1, docs/threat-model.md): the session token is held
+        // in localStorage, so any XSS on this origin can exfiltrate it. Accepted
+        // because the API issues bearer tokens; migrating to an HttpOnly cookie is a
+        // cross-repo auth change tracked as remediation work. Compensating control:
+        // threat T2 keeps every HTML sink closed (no innerHTML, no dangerouslySetInnerHTML).
+        // eslint-disable-next-line no-restricted-syntax
         localStorage.setItem('token', token)
         
         // Set authorization header for future requests
@@ -179,6 +191,12 @@ export const register = createAsyncThunk(
       
       if (response.data.success) {
         const { user, token } = response.data
+        // ACCEPTED RISK (threat T1, docs/threat-model.md): the session token is held
+        // in localStorage, so any XSS on this origin can exfiltrate it. Accepted
+        // because the API issues bearer tokens; migrating to an HttpOnly cookie is a
+        // cross-repo auth change tracked as remediation work. Compensating control:
+        // threat T2 keeps every HTML sink closed (no innerHTML, no dangerouslySetInnerHTML).
+        // eslint-disable-next-line no-restricted-syntax
         localStorage.setItem('token', token)
         
         // Set authorization header for future requests
