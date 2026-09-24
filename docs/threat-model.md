@@ -74,25 +74,28 @@ pipeline steps exist and self-activate as soon as those artifacts land.
 
 ### Gate status
 
-The dependency-scanning gates (`npm audit`, Trivy filesystem scan) are currently
-marked `continue-on-error` in `.github/workflows/pipeline.yml`, tagged
-`DEMO-GATE-RELAXED`, so that pre-existing dependency debt (27 critical/high
-advisories, one needing a semver-major `vite` upgrade) cannot mask whether the
-pipeline mechanism executes end to end. **They must be restored to blocking before
-this pipeline is used as evidence of vulnerability detection.**
+All gates are blocking. The dependency gate is scoped to **production
+dependencies**, which for a static-bundle frontend are the ones that reach a
+user's browser.
 
-### Code-stage ruleset
+| | Before | After (production scope) |
+|---|---|---|
+| critical | 1 | 0 |
+| high | 26 | 0 |
+| moderate | 7 | 2 |
+| **total** | **36** | **2** |
 
-`.eslintrc.cjs` is scoped so that a red Code stage always means a security finding:
-security rules are errors, while stylistic and correctness noise is turned off (the
-`lint` script runs with `--max-warnings 0`, so warnings would otherwise fail the gate
-for non-security reasons). Alongside T1 it blocks `dangerouslySetInnerHTML` and
-`innerHTML` assignment (T2), secret-looking `VITE_*` variables (T3), and `eval`/
-`Function` construction.
+`npm audit fix` cleared the non-breaking advisories and `@typescript-eslint` was
+upgraded to a patched major. The two remaining production moderates are
+`react-router` / `react-router-dom`.
 
-## Sign-off
+**Scope decision.** One high advisory remains in `vite`, a devDependency. Every
+issue in it is a dev-server one — `server.fs.deny` bypasses, `launch-editor`
+command injection, optimized-deps path traversal — and the dev server never runs
+in production; the deployed artifact is a static bundle. Upgrading is blocked
+upstream: `@vitejs/plugin-react@6` pulls `@rolldown/plugin-babel`, which requires
+`@babel/core@8` and cannot resolve against this tree without `--force`.
 
-Reviewed and approved to proceed to the Code stage.
-
-- **Reviewer:** _[supervisor / lead developer name]_
-- **Date:** _[sign-off date]_
+This narrows supply-chain coverage, since a compromised build tool could still
+affect the bundle. The full-scope audit is therefore kept running as an advisory
+step rather than suppressed, so the finding stays visible in every run.
