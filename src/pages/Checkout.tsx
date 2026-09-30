@@ -117,7 +117,9 @@ const Checkout = () => {
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [orderNotes, setOrderNotes] = useState('');
   const [orderDetails] = useState({
-    orderId: 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase()
+    // crypto.randomUUID, not Math.random: an order reference a third party can
+    // predict is one they can guess and probe for (typescript:S2245).
+    orderId: 'ORD-' + crypto.randomUUID().replace(/-/g, '').slice(0, 9).toUpperCase()
   });
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [transferId, setTransferId] = useState<string>('');
