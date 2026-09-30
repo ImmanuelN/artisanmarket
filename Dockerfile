@@ -17,7 +17,9 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# --ignore-scripts stops third-party lifecycle scripts executing at build time
+# (docker:S6505). Verified locally that vite build still succeeds without them.
+RUN npm ci --ignore-scripts
 
 COPY . .
 
@@ -54,12 +56,16 @@ ENV NGINX_PORT=8080
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY --from=build --chown=10001:10001 /app/dist /usr/share/nginx/html
+# Served content stays owned by root and is only readable by the runtime user, so
+# a compromised nginx process cannot rewrite the files it serves (docker:S6504).
+COPY --from=build --chown=root:root /app/dist /usr/share/nginx/html
 
 # Writable paths nginx needs when the root filesystem is mounted read-only
 # (k8s/deployment.yaml sets readOnlyRootFilesystem with emptyDir mounts here).
+# a+rX keeps directories traversable while leaving files non-writable.
 RUN mkdir -p /var/cache/nginx /var/run \
-    && chown -R 10001:10001 /var/cache/nginx /var/run /usr/share/nginx/html \
+    && chown -R 10001:10001 /var/cache/nginx /var/run \
+    && chmod -R a-w,a+rX /usr/share/nginx/html \
     # The default config ships a pid directive pointing at a root-owned path.
     && sed -i 's@^pid .*;@pid /var/run/nginx.pid;@' /etc/nginx/nginx.conf \
     # The `user` directive only applies when the master starts as root; left in
