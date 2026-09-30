@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: artisanmarket-client
+  namespace: artisanmarket
+  labels:
+    app.kubernetes.io/name: artisanmarket-client
+    app.kubernetes.io/part-of: artisanmarket
+    app.kubernetes.io/component: client
+  annotations:
+    # CKV_K8S_43 — the image digest is not knowable when this manifest is
+    # written; it exists only after the Build stage produces the image. The
+    # Deploy stage substitutes tag for digest at apply time. Committing a
+    # placeholder digest would be worse than a pinned tag, because a stale
+    # digest silently deploys a different image than the one scanned.
+    checkov.io/skip1: CKV_K8S_43=Digest substituted by the Deploy stage; a committed placeholder digest would deploy a different image than was scanned
+    #
+    # CKV_K8S_35 is not applicable: this workload takes no Secret at all.
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: artisanmarket-client
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: artisanmarket-client
+        app.kubernetes.io/part-of: artisanmarket
+        app.kubernetes.io/component: client
+    spec:
+      # A static file server calls no Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        # High UID (>10000) so the container user cannot collide with a real
+        # host user (CKV_K8S_40). Matches the `app` user in the image.
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: client
+          # Tag is rewritten by the Deploy stage. Never :latest.
+          image: ghcr.io/immanueln/artisanmarket-client:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+          # No env and no Secret: this is a static bundle. Every VITE_* value is
+          # inlined at build time and is public by definition (threat T3), so
+          # there is nothing here to inject and nothing worth protecting.
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+              ephemeral-storage: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+              ephemeral-storage: 128Mi
+          # readOnlyRootFilesystem is on, so nginx's writable paths are mounted
+          # explicitly. The image rewrites its pid path to /var/run to match.
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: nginx-cache
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: nginx-run
+          emptyDir:
+            sizeLimit: 8Mi

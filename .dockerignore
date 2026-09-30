@@ -1,0 +1,32 @@
+# Keep the build context minimal and keep local secrets and git history out of
+# the image. The build stage does `COPY . .`, so this file is what stops an
+# .env or the git history reaching a layer.
+.git
+.github
+node_modules
+dist
+dev-dist
+npm-debug.log*
+
+# Never copy real environment files into a build context. VITE_* values are
+# passed as build args instead, and .env is gitignored but present locally.
+.env
+.env.*
+!.env.example
+
+docs
+k8s
+*.md
+!README.md
+
+.eslintrc.cjs
+.zap
+coverage
+.vscode
+.idea
+*.log
+*.pem
+*.key
+*.crt
+Dockerfile
+.dockerignore
