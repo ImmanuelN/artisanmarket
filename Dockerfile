@@ -32,7 +32,11 @@ ARG VITE_IMAGEKIT_URL_ENDPOINT
 RUN npm run build
 
 # ---------- serve ----------
-FROM nginx:1.27-alpine AS runtime
+# Pinned to a current nginx/alpine. 1.27-alpine resolves to alpine 3.21.3, whose
+# OS packages carried 40 Trivy findings (38 HIGH, 2 CRITICAL); 1.31.x tracks a
+# current alpine. Pinned to a patch version rather than `alpine` or `1.31-alpine`
+# so the image that gets scanned is the image that gets deployed.
+FROM nginx:1.31.6-alpine AS runtime
 
 # nginx:alpine ships an unprivileged `nginx` user (uid/gid 101). Run as that
 # user rather than root, which means binding an unprivileged port: 8080, not 80.
