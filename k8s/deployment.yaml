@@ -7,6 +7,15 @@ metadata:
     app.kubernetes.io/name: artisanmarket-client
     app.kubernetes.io/part-of: artisanmarket
     app.kubernetes.io/component: client
+  annotations:
+    # CKV_K8S_43 — the image digest is not knowable when this manifest is
+    # written; it exists only after the Build stage produces the image. The
+    # Deploy stage substitutes tag for digest at apply time. Committing a
+    # placeholder digest would be worse than a pinned tag, because a stale
+    # digest silently deploys a different image than the one scanned.
+    checkov.io/skip1: CKV_K8S_43=Digest substituted by the Deploy stage; a committed placeholder digest would deploy a different image than was scanned
+    #
+    # CKV_K8S_35 is not applicable: this workload takes no Secret at all.
 spec:
   replicas: 2
   revisionHistoryLimit: 3
@@ -29,10 +38,11 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        # 101 is the `nginx` user in nginx:alpine, which owns the served files.
-        runAsUser: 101
-        runAsGroup: 101
-        fsGroup: 101
+        # High UID (>10000) so the container user cannot collide with a real
+        # host user (CKV_K8S_40). Matches the `app` user in the image.
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -49,7 +59,7 @@ spec:
             privileged: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
-            runAsUser: 101
+            runAsUser: 10001
             capabilities:
               drop:
                 - ALL
