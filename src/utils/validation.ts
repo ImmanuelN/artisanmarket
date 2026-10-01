@@ -1,7 +1,10 @@
 // The previous pattern nested quantifiers -- ([.-]?\w+)* -- which backtracks
 // catastrophically on a crafted address, so a pasted value could hang the UI
-// thread (typescript:S5852). This one is linear.
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// thread (typescript:S5852). This one is linear: '@' cannot appear on either
+// side, so there is no ambiguity for the engine to backtrack over.
+// Note this is a cheap shape check, not full RFC validation -- it is paired
+// with server-side express-validator isEmail(), which is authoritative.
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+$/;
 
 export interface ValidationError {
   field: string;
