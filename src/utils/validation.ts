@@ -1,3 +1,11 @@
+// The previous pattern nested quantifiers -- ([.-]?\w+)* -- which backtracks
+// catastrophically on a crafted address, so a pasted value could hang the UI
+// thread (typescript:S5852). This one is linear: '@' cannot appear on either
+// side, so there is no ambiguity for the engine to backtrack over.
+// Note this is a cheap shape check, not full RFC validation -- it is paired
+// with server-side express-validator isEmail(), which is authoritative.
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+$/;
+
 export interface ValidationError {
   field: string;
   message: string;
@@ -24,7 +32,7 @@ export const validateRegistration = (data: RegistrationData): ValidationError[] 
   }
 
   // Email validation
-  const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+  const emailRegex = EMAIL_PATTERN;
   if (!data.email.trim()) {
     errors.push({ field: 'email', message: 'Email is required' });
   } else if (!emailRegex.test(data.email.trim())) {
@@ -61,7 +69,7 @@ export const validateLogin = (email: string, password: string): ValidationError[
   const errors: ValidationError[] = [];
 
   // Email validation
-  const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+  const emailRegex = EMAIL_PATTERN;
   if (!email.trim()) {
     errors.push({ field: 'email', message: 'Email is required' });
   } else if (!emailRegex.test(email.trim())) {

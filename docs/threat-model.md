@@ -46,7 +46,7 @@ The pipeline in `.github/workflows/pipeline.yml` applies these controls cumulati
 | T5 | Static host response headers | Tampering / Information Disclosure | Without CSP, `X-Frame-Options` and HSTS, the SPA is exposed to clickjacking and script injection that a header policy would blunt | DAST gate (OWASP ZAP baseline) at Staging stage reports missing headers; policy is set on the static host, not in the bundle |
 | T6 | PWA service worker (`vite-plugin-pwa`) | Information Disclosure | `registerType: 'autoUpdate'` with a broad `globPatterns` cache could persist authenticated responses in the browser cache across sessions | Cache only static build assets; never add API responses to precache. Verify on each Workbox config change |
 | T7 | Checkout (Stripe.js) | Repudiation / Information Disclosure | Card data must never reach ArtisanMarket servers or the Redux store | Stripe Elements keeps card entry inside a Stripe-hosted iframe, holding the app in PCI DSS SAQ-A scope. Any move to raw card fields changes that materially |
-| T8 | Container image and deployment manifests | Tampering / Denial of Service | A serving image or manifest could carry known CVEs or run as root | Trivy and Checkov at Build stage — **inactive**, no `Dockerfile`, `k8s/` or `docker-compose.yml` in the repository yet |
+| T8 | Container image and deployment manifests | Tampering / Denial of Service | A serving image or manifest could carry known CVEs or run as root | **Active.** Trivy image scan and Checkov at Build stage. The first image scan found 40 findings (2 CRITICAL) from `nginx:1.27-alpine` pinning alpine 3.21.3; pinned forward to `nginx:1.31.6-alpine` and patched `libexpat`, now clean at CRITICAL/HIGH. Checkov: 89 checks pass, with one documented exception (`CKV_K8S_43` image digest) |
 | T9 | Client-side route guards | Elevation of Privilege | Hiding vendor or admin routes in the SPA is presentation only; the bundle can be read and any route reached directly | Not a client-side control — every privileged action is authorised server-side by the API. Recorded here so it is not mistaken for a mitigation |
 
 T1 is a **formally accepted risk**, not an open defect. Token-in-`localStorage` is a
@@ -54,8 +54,15 @@ real, currently-shipping design decision at three call sites in
 `src/store/slices/authSlice.ts`, each carrying an inline justification and a scoped
 `eslint-disable-next-line`. The acceptance is bounded: the rule still blocks any
 **new** credential write to browser storage, so the gate constrains future code while
-the recorded exception covers the existing three. T8 is a staged control — the
-pipeline steps exist and self-activate as soon as those artifacts land.
+the recorded exception covers the existing three. T8 is **now active**: the
+`Dockerfile` and `k8s/` manifests exist, so the Trivy image scan and Checkov both
+execute against real artifacts rather than self-skipping.
+
+Note also that T5 (response headers) is now *configured* — `nginx.conf` in the
+image carries the CSP and header policy — but is still **not exercised by DAST**,
+because the Staging gate scans `vite preview`, which serves no headers. Pointing
+DAST at a container built from this image would close that gap; it has not been
+done, and the ZAP exceptions in `.zap/rules.tsv` remain in place.
 
 ### Risk acceptance — T1
 

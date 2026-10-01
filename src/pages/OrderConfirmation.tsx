@@ -15,7 +15,8 @@ import { Container, Card, Button } from '../components/ui';
 const OrderConfirmation = () => {
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState({
-    orderId: searchParams.get('orderId') || 'ORD-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+    // crypto.randomUUID, not Math.random (typescript:S2245).
+    orderId: searchParams.get('orderId') || 'ORD-' + crypto.randomUUID().replace(/-/g, '').slice(0, 9).toUpperCase(),
     orderDate: new Date().toLocaleDateString(),
     estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     total: searchParams.get('total') || '0.00'

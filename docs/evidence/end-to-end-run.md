@@ -21,6 +21,9 @@ separately by the seeded-case runs.
 The `pull_request` event with base `main` resolves `production=true`, so all six
 stages execute without modifying `main`.
 
+![All six stages green](screenshots/pipeline-six-stages-green.png)
+*GitHub Actions — the six-stage model running end to end. See `screenshots/README.md`.*
+
 ## Stage results
 
 | Stage (Chapter 4) | Job | Result |
@@ -64,6 +67,54 @@ These must be stated wherever this run is cited:
 3. **The type check is advisory.** `tsc --noEmit` runs with
    `continue-on-error`; ~95 pre-existing errors would otherwise mask the
    security gate.
+
+## Newly-active Build-stage coverage (2026-09-30)
+
+The Build stage previously guarded its container and IaC steps on file
+detection, and both self-skipped because no `Dockerfile` or `k8s/` existed. Both
+artifacts now exist and both scanners execute against them.
+
+| Scanner | First run | After remediation |
+|---|---|---|
+| Trivy (image) | 40 findings, 2 CRITICAL | **clean** at CRITICAL/HIGH |
+| Checkov (`k8s/`) | 87 passed, 3 failed | **89 passed, 0 failed, 1 skipped** |
+
+### What the image findings were, and why they were fixable
+
+All 40 were OS packages in the base: `nginx:1.27-alpine` pins **alpine 3.21.3**.
+Pinning forward to `nginx:1.31.6-alpine` (alpine 3.24.2) cleared 39 of them, and
+the last — `libexpat` 2.8.4-r0, CVE-2026-93990 XML injection — was patched to
+2.8.5-r0 in the image.
+
+Pinned to a patch version rather than a floating `alpine` tag, so the image that
+gets scanned is the image that gets deployed.
+
+### Checkov: two fixed, one accepted
+
+| Check | Outcome |
+|---|---|
+| `CKV_K8S_40` — high UID | Fixed. Runs as uid 10001; the base image's `nginx` user is 101 |
+| `CKV2_K8S_6` — NetworkPolicy | Fixed. Default-deny plus explicit allows: ingress from the ingress controller only, egress limited to DNS — the browser calls the API directly, not this pod |
+| `CKV_K8S_43` — image digest | Accepted. The digest does not exist until the Build stage produces the image; a committed placeholder would deploy something other than what was scanned |
+(`CKV_K8S_35` does not apply — this workload takes no Secret at all.)
+
+The exception is recorded in-band as `checkov.io/skip` annotations with
+reasons, matching how the ESLint and ZAP exceptions in this project are handled.
+
+### A recurrence of the step-suppression defect
+
+The first run exposed the same defect previously fixed in the Code stage, now in
+the Build stage: the image scan failing **ended its job**, so the Trivy
+filesystem scan and both Checkov steps reported `skipped`. A base-image CVE was
+therefore suppressing both dependency scanning and all IaC scanning — meaning
+Checkov appeared wired but had never executed. All four Build scanners now carry
+`!cancelled()`, so the stage fails on the union of findings rather than the
+first one.
+
+This is the eighth instance of the same underlying issue and the second
+independent one, which is worth stating as a finding in its own right: in
+GitHub Actions, step-level failure semantics silently narrow scanner coverage,
+and each stage must be checked for it separately.
 
 ## Defects found by reaching each stage
 
