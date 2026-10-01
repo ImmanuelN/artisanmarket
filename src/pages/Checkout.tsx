@@ -25,6 +25,7 @@ import { clearCart } from '../store/slices/cartSlice';
 import { RootState } from '../store/store';
 import { showSuccessNotification, showErrorNotification } from '../utils/notifications';
 import api from '../utils/api';
+import { generateOrderReference } from '../utils/orderReference'
 
 interface ShippingAddress {
   id: string;
@@ -117,9 +118,7 @@ const Checkout = () => {
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [orderNotes, setOrderNotes] = useState('');
   const [orderDetails] = useState({
-    // crypto.randomUUID, not Math.random: an order reference a third party can
-    // predict is one they can guess and probe for (typescript:S2245).
-    orderId: 'ORD-' + crypto.randomUUID().replace(/-/g, '').slice(0, 9).toUpperCase()
+    orderId: generateOrderReference()
   });
   const [paymentIntentId, setPaymentIntentId] = useState<string>('');
   const [transferId, setTransferId] = useState<string>('');

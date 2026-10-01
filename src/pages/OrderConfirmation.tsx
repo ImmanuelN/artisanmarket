@@ -11,12 +11,12 @@ import {
   ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 import { Container, Card, Button } from '../components/ui';
+import { generateOrderReference } from '../utils/orderReference'
 
 const OrderConfirmation = () => {
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState({
-    // crypto.randomUUID, not Math.random (typescript:S2245).
-    orderId: searchParams.get('orderId') || 'ORD-' + crypto.randomUUID().replace(/-/g, '').slice(0, 9).toUpperCase(),
+    orderId: searchParams.get('orderId') || generateOrderReference(),
     orderDate: new Date().toLocaleDateString(),
     estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     total: searchParams.get('total') || '0.00'
