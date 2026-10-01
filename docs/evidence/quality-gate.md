@@ -39,23 +39,34 @@ obvious, and the constraint only surfaced at the point of trying to act on it.
 
 ## Coverage on this repository
 
-This repository has no test suite, and `new_coverage` reports 0% — yet the
-condition **passes**. SonarCloud skips it when a pull request adds no new
-*executable* lines, which is the case here: the changes are configuration,
-Kubernetes manifests, an nginx config and a regex literal.
+The repository now has a test suite. Previously it had none, and
+`new_coverage` reported 0% — passing only because SonarCloud skips the
+condition when a pull request adds no new *executable* lines. That was a
+condition not yet triggered rather than one satisfied, and the first change
+touching `src/` would have been blocked with no way to meet it.
 
-That distinction matters and should not be relied on. A change which **does**
-add executable TypeScript to this repository would be blocked by the 80%
-threshold, and no test infrastructure exists to meet it. The condition has not
-been satisfied here so much as not yet triggered.
+**17 tests, 96.6% coverage of `src/utils/validation.ts`.**
 
-The API repository carries the substantive suite — **102 tests** across
-sanitisers, the error handler and route integration against a real MongoDB,
-reaching **80.1%** on new code. See its `docs/evidence/quality-gate.md` for how
-the threshold was met rather than avoided.
+They assert security properties rather than counting lines. The central ones
+cover the ReDoS fix (`typescript:S5852`): a 50,000-character hostile input and a
+100,000-character input with no `@` must both return in under a second. Against
+the previous pattern — `([.-]?\w+)*`, which nests quantifiers — those inputs
+backtrack exponentially, and because validation runs on the UI thread a pasted
+value could hang the tab. The suite also checks the pattern still accepts
+ordinary addresses and still rejects malformed ones, so the fix cannot regress
+into something merely permissive.
 
-**Recommended follow-up:** add Vitest to this repository before the next change
-that touches `src/`, so the gate is satisfiable when it does begin to apply.
+One test covers a client-side mass-assignment case: a role outside
+`customer`/`vendor` is rejected. The server is authoritative, but the client
+should not offer to submit a privileged role in the first place.
+
+### A tooling constraint worth recording
+
+Vitest is pinned to **0.34.x**, not current. Current Vitest requires Vite 6 or
+newer and this project is on Vite 4 — the same upstream constraint that blocks
+upgrading Vite itself, documented under "Gate status" in `docs/threat-model.md`.
+A dependency being too old to upgrade also makes its *tooling* too old to
+upgrade, which compounds rather than staying isolated. Revisit both together.
 
 ## Known false positives
 
