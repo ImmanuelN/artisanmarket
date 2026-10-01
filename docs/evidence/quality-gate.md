@@ -60,13 +60,21 @@ One test covers a client-side mass-assignment case: a role outside
 `customer`/`vendor` is rejected. The server is authoritative, but the client
 should not offer to submit a privileged role in the first place.
 
-### A tooling constraint worth recording
+### Tooling constraint, since resolved
 
-Vitest is pinned to **0.34.x**, not current. Current Vitest requires Vite 6 or
-newer and this project is on Vite 4 — the same upstream constraint that blocks
-upgrading Vite itself, documented under "Gate status" in `docs/threat-model.md`.
-A dependency being too old to upgrade also makes its *tooling* too old to
-upgrade, which compounds rather than staying isolated. Revisit both together.
+Vitest was initially pinned to **0.34.x** because the project was on Vite 4 and
+current Vitest requires Vite 6 or newer — the same upstream constraint that had
+already blocked upgrading Vite itself.
+
+That is worth recording even though it no longer applies, because of what it
+showed: a dependency too old to upgrade makes its *tooling* too old to upgrade.
+The constraint compounded across a boundary rather than staying isolated, and
+the test framework inherited a limitation that originated in the bundler.
+
+Both were then resolved together. The project is on **Vite 7** with current
+Vitest, and the dependency gate runs on the full tree rather than the
+production-only scope it was narrowed to while Vite 4's dev-server advisories
+were unfixable. See "Gate status" in `docs/threat-model.md`.
 
 ## Known false positives
 

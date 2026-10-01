@@ -148,26 +148,14 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci --ignore-scripts
-      # Blocking on what actually ships. This project builds to a static
-      # bundle, so production dependencies are the ones that reach a user's
-      # browser. npm audit fix cleared the non-breaking advisories and
-      # @typescript-eslint was upgraded; production scope is now clean at this
-      # threshold.
-      - name: Dependency audit (production scope)
-        run: npm audit --omit=dev --audit-level=high
-
-      # Reported, not gated. The remaining high advisory is vite, whose issues
-      # are all dev-server ones (server.fs.deny bypasses, launch-editor command
-      # injection, optimized-deps path traversal). The dev server never runs in
-      # production. Upgrading is blocked upstream: @vitejs/plugin-react@6 pulls
-      # @rolldown/plugin-babel, which needs @babel/core@8 and cannot resolve
-      # against this tree without --force.
+      # Blocking on the FULL dependency tree, dev dependencies included.
       #
-      # This narrows supply-chain coverage: a compromised build tool could still
-      # affect the bundle. The full audit therefore stays visible here rather
-      # than being suppressed. See docs/threat-model.md.
-      - name: Dependency audit (full scope, advisory)
-        continue-on-error: true
+      # This was previously scoped to --omit=dev because vite 4 carried
+      # unfixable high-severity dev-server advisories, which narrowed
+      # supply-chain coverage: a compromised build tool can affect the bundle
+      # even though it never ships. The Vite 7 upgrade cleared them, so the
+      # scoping compromise has been reverted rather than left in place.
+      - name: Dependency audit
         run: npm audit --audit-level=high
 
   # ---- Build (4.3.4, 4.3.5, 4.3.6): deep SCA + container + IaC — staging and main only ----

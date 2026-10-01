@@ -1,13 +1,11 @@
 import { defineConfig } from 'vitest/config'
 
 /**
- * Vitest is pinned to 0.34.x because this project is on Vite 4. Current Vitest
- * requires Vite 6 or newer, which cannot be installed here — the same upstream
- * constraint that blocks upgrading Vite itself (see docs/threat-model.md,
- * "Gate status"). Revisit when Vite is upgraded.
- *
  * A separate config rather than a `test` block in vite.config.ts, so the build
  * configuration stays independent of the test configuration.
+ *
+ * Vitest was previously pinned to 0.34.x because the project was on Vite 4.
+ * The Vite 7 upgrade lifted that, and both are now current.
  */
 export default defineConfig({
   test: {
