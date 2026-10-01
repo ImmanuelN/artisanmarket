@@ -81,28 +81,28 @@ done, and the ZAP exceptions in `.zap/rules.tsv` remain in place.
 
 ### Gate status
 
-All gates are blocking. The dependency gate is scoped to **production
-dependencies**, which for a static-bundle frontend are the ones that reach a
-user's browser.
+All gates are blocking, on the **full** dependency tree.
 
-| | Before | After (production scope) |
+| | Before | After |
 |---|---|---|
 | critical | 1 | 0 |
 | high | 26 | 0 |
 | moderate | 7 | 2 |
 | **total** | **36** | **2** |
 
-`npm audit fix` cleared the non-breaking advisories and `@typescript-eslint` was
-upgraded to a patched major. The two remaining production moderates are
-`react-router` / `react-router-dom`.
+The two remaining moderates are `react-router` / `react-router-dom`.
 
-**Scope decision.** One high advisory remains in `vite`, a devDependency. Every
-issue in it is a dev-server one — `server.fs.deny` bypasses, `launch-editor`
-command injection, optimized-deps path traversal — and the dev server never runs
-in production; the deployed artifact is a static bundle. Upgrading is blocked
-upstream: `@vitejs/plugin-react@6` pulls `@rolldown/plugin-babel`, which requires
-`@babel/core@8` and cannot resolve against this tree without `--force`.
+**Previously scoped, now reverted.** The dependency gate ran with `--omit=dev`
+for a period, because Vite 4 carried high-severity dev-server advisories
+(`server.fs.deny` bypasses, `launch-editor` command injection) that could not be
+upgraded away: `@vitejs/plugin-react@6` pulls `@rolldown/plugin-babel`, which
+requires `@babel/core@8` and could not resolve against the tree.
 
-This narrows supply-chain coverage, since a compromised build tool could still
-affect the bundle. The full-scope audit is therefore kept running as an advisory
-step rather than suppressed, so the finding stays visible in every run.
+That scoping narrowed supply-chain coverage — a compromised build tool can
+affect the bundle even though it never ships — so it was recorded as a
+weakening rather than applied quietly.
+
+Upgrading to **Vite 7** cleared it. Vite 8 was *not* chosen: it forces
+`@vitejs/plugin-react@6` and reintroduces the same rolldown/Babel conflict.
+Vite 7 is the newest version with a fully resolvable plugin set here. The full
+audit is blocking again and the compromise is gone.
