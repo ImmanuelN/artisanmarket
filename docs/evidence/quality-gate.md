@@ -1,11 +1,19 @@
 # Quality gate configuration
 
-**Decision date:** 2026-10-01
+**Decision date:** 2026-10-01 · **Status:** passing on the default gate
 
 The Code stage treats SonarQube as a **gate**, not a reporting step:
 `sonar.qualitygate.wait=true` makes the scanner wait for the server-side result
 and fail the build when it is `ERROR`. Without it the step uploads findings and
 passes regardless.
+
+## Result
+
+The project passes SonarCloud's **unmodified default gate**, *Sonar way* — every
+condition green, nothing relaxed, no paid feature used.
+
+![SonarCloud quality gate passing on PR #4](screenshots/sonar-gate-passed-client.png)
+*SonarCloud quality gate, `artisanmarket` PR #4.*
 
 ## The gate is SonarCloud's default, "Sonar way"
 
@@ -41,10 +49,10 @@ add executable TypeScript to this repository would be blocked by the 80%
 threshold, and no test infrastructure exists to meet it. The condition has not
 been satisfied here so much as not yet triggered.
 
-The API repository carries the substantive suite — 54 tests across sanitisers,
-the error handler and route integration against a real MongoDB. See its
-`docs/evidence/quality-gate.md`, including why the coverage threshold was met
-rather than avoided.
+The API repository carries the substantive suite — **102 tests** across
+sanitisers, the error handler and route integration against a real MongoDB,
+reaching **80.1%** on new code. See its `docs/evidence/quality-gate.md` for how
+the threshold was met rather than avoided.
 
 **Recommended follow-up:** add Vitest to this repository before the next change
 that touches `src/`, so the gate is satisfiable when it does begin to apply.
