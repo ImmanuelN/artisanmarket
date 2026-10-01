@@ -12,7 +12,9 @@
 # unset one inlines as undefined rather than a misleading placeholder.
 
 # ---------- build ----------
-FROM node:20-alpine AS build
+# Node 22: vite 7 requires ^20.19 || >=22.12 and vitest 5 requires >=22.12.
+# Kept in step with the Node version the pipeline builds and tests on.
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
