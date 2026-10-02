@@ -46,9 +46,18 @@ FROM nginx:1.31.6-alpine AS runtime
 # user on the host (CKV_K8S_40). The base image's `nginx` user is uid 101, well
 # inside the range a host assigns to system accounts.
 #
-# libexpat is upgraded explicitly: the pinned base still carries 2.8.4-r0, which
-# Trivy flags for CVE-2026-93990 (XML injection), fixed in 2.8.5-r0.
-RUN apk add --no-cache --upgrade libexpat \
+# Two OS packages are upgraded explicitly. The base is pinned to a patch version
+# so the image that gets scanned is the image that gets deployed, which means a
+# newly published CVE in that layer has to be patched here rather than by
+# floating the tag:
+#
+#   libexpat  2.8.4-r0 -> 2.8.5-r0   CVE-2026-93990, XML injection.
+#   pcre2     10.48-r0 -> 10.49-r0   CVE-2026-103111, out-of-bounds write via a
+#                                    crafted regular expression. nginx links
+#                                    pcre2 for regex location matching, so this
+#                                    reaches the client image; the API image
+#                                    carries no pcre2 and scanned clean.
+RUN apk add --no-cache --upgrade libexpat pcre2 \
     && addgroup -g 10001 -S app \
     && adduser -u 10001 -S app -G app
 
