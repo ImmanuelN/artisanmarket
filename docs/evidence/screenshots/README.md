@@ -11,7 +11,7 @@ the documents already link to them.
 **Referenced by:** `quality-gate.md`.
 
 ```
-https://sonarcloud.io/summary/pull_request?id=ImmanuelN_artisanmarket&pullRequest=4
+https://sonarcloud.io/dashboard?id=ImmanuelN_artisanmarket&pullRequest=4
 ```
 
 The **Quality Gate** panel showing **Passed** with all conditions visible.
