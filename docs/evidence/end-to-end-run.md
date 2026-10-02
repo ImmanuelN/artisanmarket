@@ -121,6 +121,47 @@ independent one, which is worth stating as a finding in its own right: in
 GitHub Actions, step-level failure semantics silently narrow scanner coverage,
 and each stage must be checked for it separately.
 
+## A newly published CVE blocked a docs-only merge (2026-10-02)
+
+The `main` run for PR #9 — a change that edited two Markdown files and nothing
+else — failed at **Build · Trivy (container image scan)**:
+
+| | |
+|---|---|
+| Package | `pcre2` 10.48-r0 |
+| Advisory | CVE-2026-103111 — out-of-bounds write via a crafted regular expression |
+| Severity | HIGH |
+| Fixed in | 10.49-r0 |
+| Base image | `nginx:1.31.6-alpine` (alpine 3.24.2) |
+
+Nothing in the commit touched the image. Alpine published the advisory between
+the PR run, which was green, and the `main` run roughly twenty minutes later.
+
+Two things follow, and both bear on how the Section 6.2 claim should be read.
+
+**A green pipeline is a statement about a moment, not a property of a commit.**
+A blocking image gate re-evaluates an unchanged artefact against a vulnerability
+database that moves independently of the repository, so the same commit can go
+from pass to fail with no authorial action. That is the gate working rather than
+misfiring: the deployed image genuinely did become vulnerable. It does mean the
+end-to-end evidence above is timestamped, and a re-run of run `35995410564`
+today would not reproduce it.
+
+**Pinning the base moves the patching obligation into the Dockerfile.** The base
+is pinned to a patch version on purpose, so that the image which gets scanned is
+the image which gets deployed. The cost of that choice is that a fix published
+upstream does not arrive by itself. The remediation is an explicit package
+upgrade in the runtime stage — the same pattern already in place for `libexpat`:
+
+```dockerfile
+RUN apk add --no-cache --upgrade libexpat pcre2
+```
+
+Scope: only the client image was exposed. nginx links `pcre2` for regex location
+matching, so the package is present in the serve stage; the API image
+(alpine 3.23.4, from `node:22-alpine`) carries no `pcre2` and scanned 0 findings
+on the same day.
+
 ## Defects found by reaching each stage
 
 Five pipeline defects were only discoverable once each stage unblocked the next.
