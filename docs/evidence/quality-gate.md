@@ -45,7 +45,8 @@ condition when a pull request adds no new *executable* lines. That was a
 condition not yet triggered rather than one satisfied, and the first change
 touching `src/` would have been blocked with no way to meet it.
 
-**17 tests, 96.6% coverage of `src/utils/validation.ts`.**
+**25 tests across 3 files**, covering `src/utils/validation.ts`,
+`src/utils/orderReference.ts` and the `OrderConfirmation` page.
 
 They assert security properties rather than counting lines. The central ones
 cover the ReDoS fix (`typescript:S5852`): a 50,000-character hostile input and a
