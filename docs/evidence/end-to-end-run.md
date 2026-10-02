@@ -48,14 +48,18 @@ OWASP ZAP baseline against the built SPA served by `vite preview`:
 
 ```
 FAIL-NEW: 0   FAIL-INPROG: 0   WARN-NEW: 0   WARN-INPROG: 0
-INFO: 0       IGNORE: 10       PASS: 57
+INFO: 0       IGNORE: 9        PASS: 58
 ```
 
-57 application-layer rules passed across 9 URLs. The 10 `IGNORE` entries are
+58 application-layer rules passed across 9 URLs. The 9 `IGNORE` entries are
 response-header rules scoped out per-rule in `.zap/rules.tsv`: the DAST target is
 a static file server, and header policy is applied at the CDN/static host
 (threat T5). Those controls are recorded as requiring verification against the
 deployed host, which this job does not cover.
+
+![OWASP ZAP baseline scan result](screenshots/zap-baseline-client.png)
+*Staging · DAST — the ZAP baseline step, showing the totals line and the
+per-rule `IGNORE` entries that produce it.*
 
 ## Validity caveats
 
