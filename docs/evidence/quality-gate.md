@@ -12,8 +12,13 @@ passes regardless.
 The project passes SonarCloud's **unmodified default gate**, *Sonar way* — every
 condition green, nothing relaxed, no paid feature used.
 
-![SonarCloud quality gate passing on PR #4](screenshots/sonar-gate-passed-client.png)
-*SonarCloud quality gate, `artisanmarket` PR #4.*
+> **Screenshot pending — `screenshots/sonar-gate-passed-client.png`.**
+> *SonarCloud quality gate, `artisanmarket` PR #4.*
+> Capture instructions are in `screenshots/README.md`. Once the file is
+> committed, delete this block and uncomment the embed below it.
+
+<!-- ![SonarCloud quality gate passing on PR #4](screenshots/sonar-gate-passed-client.png) -->
+<!-- *SonarCloud quality gate, `artisanmarket` PR #4.* -->
 
 ## The gate is SonarCloud's default, "Sonar way"
 
