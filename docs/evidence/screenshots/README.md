@@ -1,4 +1,4 @@
-# Screenshots to capture
+# Screenshots
 
 The evidence documents reference these images. Save with the filename given —
 the documents already link to them.
@@ -6,39 +6,76 @@ the documents already link to them.
 > **Before capturing:** check nothing sensitive is in frame — tokens in a URL
 > bar, unrelated private repositories, email addresses in an account menu.
 
-## 1. `sonar-gate-passed-client.png`
+| File | State |
+|---|---|
+| `sonar-gate-passed-client.png` | **captured**, embedded in `quality-gate.md` |
+| `zap-baseline-client.png` | **captured**, embedded in `end-to-end-run.md` |
+| `pipeline-six-stages-green.png` | **needs recapture** — see below |
+
+## 1. `sonar-gate-passed-client.png` — done
 
 **Referenced by:** `quality-gate.md`.
 
 ```
-https://sonarcloud.io/summary/pull_request?id=ImmanuelN_artisanmarket&pullRequest=4
+https://sonarcloud.io/dashboard?id=ImmanuelN_artisanmarket&pullRequest=4
 ```
 
-The **Quality Gate** panel showing **Passed** with all conditions visible.
+The **Quality Gate** panel showing **Passed** with all conditions visible, and
+the **Coverage** panel reading 0.0% against a required 80.0% in the same frame.
 
-Capture the **Coverage on New Code** measure in the same frame if it fits. It
-reads 0% yet passes, because SonarCloud skips the condition when a pull request
-adds no new executable lines — a distinction the document explains and which is
-easy to misread from the number alone.
+That pairing is the valuable part and the captured image has it. A 0% coverage
+measure sitting next to a Passed gate is the whole point of the "Coverage on
+this repository" section — do not crop it out as if it were an error.
 
-## 2. `pipeline-six-stages-green.png`
+## 2. `pipeline-six-stages-green.png` — recapture needed
 
 **Referenced by:** `end-to-end-run.md`.
 
+The image currently saved under this name is the **workflow run list**, which
+shows run titles and branches but no stage names, and includes a failed run. It
+does not evidence the claim in its caption, so it is not embedded.
+
+What is needed is a **single run page**, not the list. Open a successful run and
+capture the job sidebar showing all eight rows green:
+
 ```
-https://github.com/ImmanuelN/artisanmarket/actions
+Context · resolve promotion stage
+Plan · threat model present
+Code · SCA baseline (npm audit)
+Code · SAST + secret scanning
+Build · SCA + container + IaC scanning
+Staging · DAST
+Deploy · production release gate
+Monitor · compliance summary
 ```
 
-The most recent successful run on `feat/sonar-activation`, showing all eight
-jobs green: Context, Plan, Code (SAST), Code (SCA), Build, Staging/DAST, Deploy,
-Monitor.
+A run that satisfies this:
 
-## 3. `zap-baseline-client.png`
+```
+https://github.com/ImmanuelN/artisanmarket/actions/runs/36996863453
+```
+
+> The run-list image is still worth keeping, but for a different claim — that
+> the pipeline ran repeatedly across all three branches and genuinely blocked a
+> merge. If you want that in the thesis, save it as
+> `pipeline-run-history.png` and it can be embedded alongside the CVE section,
+> where the one red run is the evidence rather than a blemish.
+
+## 3. `zap-baseline-client.png` — done
 
 **Referenced by:** `end-to-end-run.md` — the DAST section.
 
-Open that run's **Staging · DAST** job and capture the ZAP summary line:
-`FAIL-NEW: 0 · WARN-NEW: 0 · IGNORE: 10 · PASS: 57`.
+The **Staging · DAST** job showing the ZAP totals line:
 
-The `IGNORE: 10` matters — those are the host-layer header rules scoped out in
-`.zap/rules.tsv`, not findings that were silently dropped.
+```
+FAIL-NEW: 0  FAIL-INPROG: 0  WARN-NEW: 0  WARN-INPROG: 0  INFO: 0  IGNORE: 9  PASS: 58
+```
+
+The `IGNORE: 9` matters — those are the host-layer header rules scoped out in
+`.zap/rules.tsv`, not findings that were silently dropped. The captured image
+shows the per-rule `IGNORE` entries above the totals, which is what makes that
+readable rather than assertable.
+
+> This capture corrected the document. `end-to-end-run.md` had recorded
+> `IGNORE: 10 · PASS: 57`; the run log confirms the screenshot, and the figures
+> in the document were wrong.

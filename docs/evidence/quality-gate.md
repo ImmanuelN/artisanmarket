@@ -12,13 +12,10 @@ passes regardless.
 The project passes SonarCloud's **unmodified default gate**, *Sonar way* — every
 condition green, nothing relaxed, no paid feature used.
 
-> **Screenshot pending — `screenshots/sonar-gate-passed-client.png`.**
-> *SonarCloud quality gate, `artisanmarket` PR #4.*
-> Capture instructions are in `screenshots/README.md`. Once the file is
-> committed, delete this block and uncomment the embed below it.
-
-<!-- ![SonarCloud quality gate passing on PR #4](screenshots/sonar-gate-passed-client.png) -->
-<!-- *SonarCloud quality gate, `artisanmarket` PR #4.* -->
+![SonarCloud quality gate passing on PR #4](screenshots/sonar-gate-passed-client.png)
+*SonarCloud quality gate, `artisanmarket` PR #4 — Passed on the default Sonar
+way gate. Note the Coverage panel reading 0.0% against a required 80.0%: see
+"Coverage on this repository" below for why that did not fail the gate.*
 
 ## The gate is SonarCloud's default, "Sonar way"
 
@@ -45,10 +42,28 @@ obvious, and the constraint only surfaced at the point of trying to act on it.
 ## Coverage on this repository
 
 The repository now has a test suite. Previously it had none, and
-`new_coverage` reported 0% — passing only because SonarCloud skips the
-condition when a pull request adds no new *executable* lines. That was a
-condition not yet triggered rather than one satisfied, and the first change
-touching `src/` would have been blocked with no way to meet it.
+`new_coverage` reported 0% while the gate still passed.
+
+The measured state of PR #4, from SonarCloud's own API:
+
+| Metric | Value |
+|---|---|
+| `new_lines` | 15 |
+| `new_lines_to_cover` | 3 |
+| `new_uncovered_lines` | 3 |
+| `new_coverage` | 0.0% |
+| Gate condition `new_coverage LT 80` | reported **OK** |
+
+So the condition did not fail despite 0% falling short of the 80% threshold,
+and it was not a case of there being nothing to cover — there were three new
+lines to cover and none of them were covered. SonarCloud does not document the
+rule it applied here, and this project has not established it, so the mechanism
+is left as an observation rather than explained.
+
+What matters for the argument does not depend on the mechanism: a change with
+0% coverage on new code passed a gate whose stated coverage condition is 80%.
+The condition was not enforcing anything at that point, which is precisely why
+the suite below was built rather than relied upon to appear.
 
 **25 tests across 3 files**, covering `src/utils/validation.ts`,
 `src/utils/orderReference.ts` and the `OrderConfirmation` page.
