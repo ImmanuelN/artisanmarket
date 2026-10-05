@@ -155,8 +155,14 @@ jobs:
       # supply-chain coverage: a compromised build tool can affect the bundle
       # even though it never ships. The Vite 7 upgrade cleared them, so the
       # scoping compromise has been reverted rather than left in place.
+      #
+      # GHSA-vfj7-8cjw-p6xm (braces) then arrived with no released fix at all,
+      # and the scoping was deliberately not reinstated. scripts/audit-gate.mjs
+      # keeps the whole tree in scope and lets a named advisory be accepted in
+      # .audit-allowlist.json with a reason and a review date, so the coverage
+      # stays, the exception is visible on every run, and it expires.
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: node scripts/audit-gate.mjs --level=high
 
   # ---- Build (4.3.4, 4.3.5, 4.3.6): deep SCA + container + IaC — staging and main only ----
   build-security:

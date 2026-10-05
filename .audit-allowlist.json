@@ -1,0 +1,19 @@
+{
+  "$comment": [
+    "Advisories accepted for the dependency gate (scripts/audit-gate.mjs).",
+    "An entry here is not a dismissal: the advisory is still scanned and still",
+    "printed on every run. It expires on reviewBy, and the build fails once that",
+    "date passes, so an acceptance cannot quietly become permanent.",
+    "Add an entry only when there is no released fix. If a fix exists, take it."
+  ],
+  "accepted": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "reason": "Stack-exhaustion denial of service through deeply nested glob patterns. Affects every published version of braces (the advisory range is '*'), so there is no release to upgrade to. In this repository it reaches the tree only through tailwindcss, which uses it via chokidar and micromatch to match the content globs in tailwind.config.js. Those globs are written by this project and are not influenced by any request or by user input, so the input that would trigger the exhaustion is not attacker-controlled. Note that the 'it never ships' argument does not apply cleanly here: tailwindcss is a devDependency but its output is the stylesheet that ships, so this is accepted on reachability rather than on the dependency being absent from the artefact. Accepted rather than scoping the audit to --omit=dev, which would silently drop supply-chain coverage of all build tooling and not just this advisory.",
+      "acceptedOn": "2026-10-05",
+      "reviewBy": "2026-12-05"
+    }
+  ]
+}

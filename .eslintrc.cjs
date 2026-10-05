@@ -35,6 +35,15 @@ module.exports = {
     'postcss.config.js',
     'tailwind.config.js',
   ],
+  overrides: [
+    {
+      // CI and build tooling runs under Node, not in the browser. Scoped to
+      // scripts/ so the browser-only assumption still holds everywhere else.
+      files: ["scripts/**/*.{js,mjs,cjs}"],
+      env: { node: true, browser: false },
+    },
+  ],
+
   rules: {
     // ---- Security: these fail the Code stage ----
     'no-eval': 'error',
