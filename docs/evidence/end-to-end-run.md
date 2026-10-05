@@ -21,13 +21,9 @@ separately by the seeded-case runs.
 The `pull_request` event with base `main` resolves `production=true`, so all six
 stages execute without modifying `main`.
 
-> **Screenshot pending — `screenshots/pipeline-six-stages-green.png`.**
-> *GitHub Actions — the six-stage model running end to end.*
-> Capture instructions are in `screenshots/README.md`. Once the file is
-> committed, delete this block and uncomment the embed below it.
-
-<!-- ![All six stages green](screenshots/pipeline-six-stages-green.png) -->
-<!-- *GitHub Actions — the six-stage model running end to end.* -->
+![All six stages green](screenshots/pipeline-six-stages-green.png)
+*GitHub Actions, run #45 — the six-stage model executing end to end. All
+eight jobs green, and the Vitest report showing 25 of 25 tests passing.*
 
 ## Stage results
 

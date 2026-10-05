@@ -10,7 +10,7 @@ the documents already link to them.
 |---|---|
 | `sonar-gate-passed-client.png` | **captured**, embedded in `quality-gate.md` |
 | `zap-baseline-client.png` | **captured**, embedded in `end-to-end-run.md` |
-| `pipeline-six-stages-green.png` | **needs recapture** — see below |
+| `pipeline-six-stages-green.png` | **captured**, embedded in `end-to-end-run.md` |
 
 ## 1. `sonar-gate-passed-client.png` — done
 
@@ -27,16 +27,16 @@ That pairing is the valuable part and the captured image has it. A 0% coverage
 measure sitting next to a Passed gate is the whole point of the "Coverage on
 this repository" section — do not crop it out as if it were an error.
 
-## 2. `pipeline-six-stages-green.png` — recapture needed
+## 2. `pipeline-six-stages-green.png` — done
 
 **Referenced by:** `end-to-end-run.md`.
 
-The image currently saved under this name is the **workflow run list**, which
-shows run titles and branches but no stage names, and includes a failed run. It
-does not evidence the claim in its caption, so it is not embedded.
+Recaptured as a **single run page** (run #45) rather than the run list, so the
+job sidebar carries all eight rows green plus the stage graph. The first attempt
+under this name was the workflow run list, which shows no stage names and could
+not evidence its caption.
 
-What is needed is a **single run page**, not the list. Open a successful run and
-capture the job sidebar showing all eight rows green:
+For reference, the eight rows that must be legible:
 
 ```
 Context · resolve promotion stage
@@ -52,7 +52,7 @@ Monitor · compliance summary
 A run that satisfies this:
 
 ```
-https://github.com/ImmanuelN/artisanmarket/actions/runs/36996863453
+https://github.com/ImmanuelN/![alt text](image.png)artisanmarket/actions/runs/36996863453
 ```
 
 > The run-list image is still worth keeping, but for a different claim — that
