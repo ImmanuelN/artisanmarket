@@ -1,0 +1,35 @@
+# Gitleaks configuration — ArtisanMarket client (Code stage)
+#
+# The default rule set is kept in full; this file only records narrowly scoped
+# exceptions for literal placeholders, each justified below.
+#
+# Why it exists: push and pull-request scans only see the commits they
+# introduce. The Monitor stage's scheduled run scans the full history of main,
+# which reaches commit 6a895f5 (2025-08-01), from before the client and API were
+# split into separate repositories. That commit contains a server/ folder with
+# the placeholders below. Every hit was checked and none is a live credential.
+#
+# Each exception names the exact placeholder rather than a file or a rule, so a
+# real secret of the same kind is still detected and still fails the stage.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented placeholder literals, not live credentials"
+regexes = [
+  # The Stripe fallback literal the old server code used when no key was set.
+  # Written with a character class so this file does not itself contain a
+  # contiguous Stripe-format literal — Trivy's secret scanner flags the raw
+  # string even inside an allowlist. Same exception as artisanmarket-api.
+  '''sk_test_pl[a]ceholder''',
+
+  # Placeholder bearer tokens in server/test-vendor-bank-curl.md.
+  '''^(YOUR_VENDOR_TOKEN|CUSTOMER_TOKEN|INVALID_TOKEN)$''',
+
+  # The commented "# Example:" BANK_ENCRYPTION_KEY in DEMO_BANKING_SETUP.md, a
+  # sequential illustration (a1b2c3d4e5f6…). Matched by that prefix, not by
+  # writing out the full value: a random 64-hex key shares a 12-character
+  # prefix with probability about 1 in 2.8e14.
+  '''^a1b2c3d4e5f6[0-9a-f]{52}$''',
+]
