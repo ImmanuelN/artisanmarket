@@ -1,0 +1,3027 @@
+{
+  "version": "2.6.2",
+  "summary": {
+    "title": "ArtisanMarket Client Threat Model",
+    "owner": "Immanuel",
+    "description": "Plan-stage threat model (Section 4.3.1) for the ArtisanMarket storefront SPA (React 18, Vite 7, TypeScript; Redux Toolkit and TanStack Query; nginx static host on Kubernetes; ArtisanMarket API over HTTPS and Socket.IO; Stripe.js, ImageKit, Plaid Link). Covers browsing and search, registration and login, cart and checkout, vendor dashboards and product reviews. Everything shipped in the bundle is public: the SPA is a client of the trust boundary, never an enforcer of it; all authorisation decisions belong to the API.",
+    "id": 0
+  },
+  "detail": {
+    "contributors": [],
+    "diagrams": [
+      {
+        "version": "2.3.0",
+        "title": "ArtisanMarket SPA",
+        "description": "Data flows across the build and delivery, browser, backend and third-party trust boundaries.",
+        "thumbnail": "./public/content/images/thumbnail.stride.jpg",
+        "diagramType": "STRIDE",
+        "id": 0,
+        "cells": [
+          {
+            "position": {
+              "x": 260,
+              "y": 20
+            },
+            "size": {
+              "width": 1270,
+              "height": 240
+            },
+            "attrs": {
+              "label": {
+                "text": "Build & delivery"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "840479ac-f32f-4689-bf9c-654a2ba315f9",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Build & delivery",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 260,
+              "y": 290
+            },
+            "size": {
+              "width": 640,
+              "height": 780
+            },
+            "attrs": {
+              "label": {
+                "text": "Visitor's browser"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "aaa5f05b-0746-40ae-b3c8-dd84f5b06cc7",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Visitor's browser",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 960,
+              "y": 290
+            },
+            "size": {
+              "width": 570,
+              "height": 330
+            },
+            "attrs": {
+              "label": {
+                "text": "ArtisanMarket backend"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "d8ccac42-284c-4655-a453-d2f425763d22",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "ArtisanMarket backend",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 960,
+              "y": 660
+            },
+            "size": {
+              "width": 570,
+              "height": 410
+            },
+            "attrs": {
+              "label": {
+                "text": "Third parties"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "a2b5c9c8-a320-4597-8990-5a26f1f2639b",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Third parties",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 290,
+              "y": 860
+            },
+            "size": {
+              "width": 260,
+              "height": 190
+            },
+            "attrs": {
+              "label": {
+                "text": "Stripe iframe"
+              }
+            },
+            "visible": true,
+            "shape": "trust-boundary-box",
+            "id": "0498ac88-9d99-4114-90a1-9c7339593cbd",
+            "zIndex": -1,
+            "data": {
+              "type": "tm.BoundaryBox",
+              "name": "Stripe iframe",
+              "description": "",
+              "isTrustBoundary": true,
+              "hasOpenThreats": false
+            }
+          },
+          {
+            "position": {
+              "x": 1320,
+              "y": 50
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "npm registry"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 1,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "260b020e-4036-42ba-9af0-2f5b0807858f"
+                },
+                {
+                  "group": "right",
+                  "id": "b85e81ed-837d-4121-b9bd-723c9f18a015"
+                },
+                {
+                  "group": "bottom",
+                  "id": "09d37e90-4918-42aa-8b1b-c60da1585b7e"
+                },
+                {
+                  "group": "left",
+                  "id": "1bf9a4dd-fd6d-4aad-8c51-90f7465eab50"
+                }
+              ]
+            },
+            "id": "0dfa1e35-06fb-4073-a678-c795045d196f",
+            "data": {
+              "type": "tm.Actor",
+              "name": "npm registry",
+              "description": "Public package registry supplying third-party dependencies.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "providesAuthentication": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 1320,
+              "y": 160
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Build env\n(VITE_* variables)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 2,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "865b0d01-2fbc-48ed-a9a1-b4732676f12a"
+                },
+                {
+                  "group": "right",
+                  "id": "5ac5214b-b222-44d9-8024-c70757e9e77e"
+                },
+                {
+                  "group": "bottom",
+                  "id": "69e2b1a7-2f11-4443-8728-0aa2f80a2c89"
+                },
+                {
+                  "group": "left",
+                  "id": "e8db80b6-d8e1-4423-b264-4c79c09b35b0"
+                }
+              ]
+            },
+            "id": "7b4cbfe4-b09b-4eb5-8cbe-995df87f1035",
+            "data": {
+              "type": "tm.Store",
+              "name": "Build env (VITE_* variables)",
+              "description": "Build-time environment variables inlined into the public bundle by Vite.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": false,
+              "storesInventory": false,
+              "threats": [
+                {
+                  "id": "83fc8524-c27d-423d-9aa6-a85d6d8a0a4e",
+                  "title": "Secret placed in a public build variable",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "Every import.meta.env.VITE_* value is inlined into the public bundle. A private key placed in one is world-readable.",
+                  "mitigation": "Only publishable values are used: VITE_STRIPE_PUBLISHABLE_KEY, VITE_IMAGEKIT_PUBLIC_KEY, VITE_API_URL, VITE_SOCKET_URL. Gitleaks gate at Code stage. Secret keys must stay server-side.",
+                  "modelType": "STRIDE",
+                  "number": 3,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 920,
+              "y": 80
+            },
+            "size": {
+              "width": 120,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "CI pipeline"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 3,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "4c3e6d2d-9f06-4337-bbce-9b350bc2b964"
+                },
+                {
+                  "group": "right",
+                  "id": "2c01d5f0-13e4-4a9c-9e7f-57f659434de8"
+                },
+                {
+                  "group": "bottom",
+                  "id": "5820470b-9693-416d-a231-513840d91e55"
+                },
+                {
+                  "group": "left",
+                  "id": "29235ee5-81cc-4c49-a193-234a288b2a18"
+                }
+              ]
+            },
+            "id": "c78dc8c4-f9d1-4f98-bf8e-0c7669e99021",
+            "data": {
+              "type": "tm.Process",
+              "name": "CI pipeline",
+              "description": "GitHub Actions pipeline (.github/workflows/pipeline.yml) running the Plan, Code, Build, Staging, Deploy and Monitor gates.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 560,
+              "y": 80
+            },
+            "size": {
+              "width": 120,
+              "height": 120
+            },
+            "attrs": {
+              "text": {
+                "text": "Static host\n(nginx)"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 4,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "1edd2adc-3233-47fc-8c70-581b29e6beda"
+                },
+                {
+                  "group": "right",
+                  "id": "4df6e12c-2ea7-4a4e-b25f-99b4a72ac3ce"
+                },
+                {
+                  "group": "bottom",
+                  "id": "3dbac931-b794-48b3-8461-f4046cc6eb56"
+                },
+                {
+                  "group": "left",
+                  "id": "49c7758a-0ea0-4a57-8441-cae231c7b45c"
+                }
+              ]
+            },
+            "id": "f8ffd949-ead5-41d0-b3df-d03e632ab31d",
+            "data": {
+              "type": "tm.Process",
+              "name": "Static host (nginx)",
+              "description": "nginx container serving the static bundle and header policy, deployed with the k8s/ manifests.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": true,
+              "privilegeLevel": "",
+              "threats": [
+                {
+                  "id": "7d79e1ac-ad6b-42ad-805a-bbca683ddfd9",
+                  "title": "Vulnerable or over-privileged serving image",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "A serving image or deployment manifest could carry known CVEs or run as root (Tampering / Denial of service).",
+                  "mitigation": "Trivy image scan and Checkov at Build stage. The first image scan found 40 findings (2 CRITICAL) from nginx:1.27-alpine pinning Alpine 3.21.3; pinned forward to nginx:1.31.6-alpine and patched libexpat (CVE-2026-93990) and pcre2 (CVE-2026-103111, published after the image had passed every gate), now clean at CRITICAL/HIGH. Checkov: 89 checks pass, with one documented exception (CKV_K8S_43 image digest).",
+                  "modelType": "STRIDE",
+                  "number": 8,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 40,
+              "y": 600
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Shopper / vendor"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 5,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "5386ddc5-9784-4501-b067-baa8a515f683"
+                },
+                {
+                  "group": "right",
+                  "id": "304f58d8-7608-41f4-a770-9322c139c949"
+                },
+                {
+                  "group": "bottom",
+                  "id": "20974a7f-1f94-427f-b76c-03816008fc45"
+                },
+                {
+                  "group": "left",
+                  "id": "5178c77f-2693-4b5e-b783-75211a4d229a"
+                }
+              ]
+            },
+            "id": "165babe7-4a4d-42cb-8b0c-85187b6b1687",
+            "data": {
+              "type": "tm.Actor",
+              "name": "Shopper / vendor",
+              "description": "Visitor using a browser: browsing, search, registration and login, cart and checkout, vendor dashboards, reviews.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "providesAuthentication": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 520,
+              "y": 560
+            },
+            "size": {
+              "width": 140,
+              "height": 140
+            },
+            "attrs": {
+              "text": {
+                "text": "React SPA"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 6,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "b62a8451-7762-43e9-972f-51e51dc5d6fc"
+                },
+                {
+                  "group": "right",
+                  "id": "ddedf0cb-eb98-4fb8-bc71-3b9a6f11822b"
+                },
+                {
+                  "group": "bottom",
+                  "id": "1e1aaa0b-f850-4a28-a309-2efa186dd90c"
+                },
+                {
+                  "group": "left",
+                  "id": "4ec84d3d-ed28-4333-b14a-98d129810fcf"
+                }
+              ]
+            },
+            "id": "841d5378-5e42-4fda-860e-048af699c1f5",
+            "data": {
+              "type": "tm.Process",
+              "name": "React SPA",
+              "description": "React 18 single-page application (Vite 7, TypeScript) executing in the visitor's browser. Fully attacker-inspectable; a client of the trust boundary, never an enforcer of it.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": true,
+              "isWebApplication": true,
+              "privilegeLevel": "Browser origin",
+              "threats": [
+                {
+                  "id": "56084387-6e60-4cfa-8955-26aeef982f64",
+                  "title": "Attacker-supplied content rendered as HTML",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "Attacker-supplied content (review bodies, shop descriptions) rendered as raw HTML would execute as script. This is the delivery path for T1 and also enables elevation of privilege within the user's session.",
+                  "mitigation": "No dangerouslySetInnerHTML or innerHTML assignment anywhere in src/; React escapes by default. Code-stage ESLint and SonarQube rules block both sinks. Any future use is a blocking review item.",
+                  "modelType": "STRIDE",
+                  "number": 2,
+                  "score": ""
+                },
+                {
+                  "id": "67e3abbc-5464-40b4-89d0-370b9a9ef8b6",
+                  "title": "Client-side route guards mistaken for access control",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Elevation of privilege",
+                  "description": "Hiding vendor or admin routes in the SPA is presentation only; the bundle can be read and any route reached directly.",
+                  "mitigation": "Not a client-side control: every privileged action is authorised server-side by the ArtisanMarket API. Recorded here so it is not mistaken for a mitigation.",
+                  "modelType": "STRIDE",
+                  "number": 9,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 300,
+              "y": 340
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Redux store"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 7,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "6b4d01b7-374a-4f3d-b9b0-dace70469ec5"
+                },
+                {
+                  "group": "right",
+                  "id": "cc2e29b1-77d8-44c5-a38c-27b81d795a93"
+                },
+                {
+                  "group": "bottom",
+                  "id": "0173fe28-f154-4a97-8e47-29acd26691af"
+                },
+                {
+                  "group": "left",
+                  "id": "e2b72573-8de2-4411-adf3-277e4623c5c5"
+                }
+              ]
+            },
+            "id": "0581bea5-05f6-44fc-bbf2-62784728463a",
+            "data": {
+              "type": "tm.Store",
+              "name": "Redux store",
+              "description": "Redux Toolkit (src/store/) and TanStack Query server state, in memory.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": false,
+              "storesInventory": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 700,
+              "y": 340
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "SW cache"
+              },
+              "topLine": {
+                "stroke": "red",
+                "strokeWidth": 2.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "red",
+                "strokeWidth": 2.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 8,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "996551cf-90b1-457f-b827-41851c5bc2c5"
+                },
+                {
+                  "group": "right",
+                  "id": "5e2a8480-204f-419d-9720-fadcf5e8888c"
+                },
+                {
+                  "group": "bottom",
+                  "id": "837eb0dd-94ef-4a49-b0d2-ed138397f036"
+                },
+                {
+                  "group": "left",
+                  "id": "258bd421-76ca-40cc-a176-f74ea7f8c806"
+                }
+              ]
+            },
+            "id": "2873fb5b-c166-4f5b-ba1f-082508d7acbb",
+            "data": {
+              "type": "tm.Store",
+              "name": "SW cache",
+              "description": "Workbox precache created by vite-plugin-pwa.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": false,
+              "storesInventory": false,
+              "threats": [
+                {
+                  "id": "71be7ce1-a254-4459-b090-380295124235",
+                  "title": "Authenticated responses persisted in service worker cache",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Information disclosure",
+                  "description": "vite-plugin-pwa with registerType 'autoUpdate' and a broad globPatterns cache could persist authenticated responses in the browser cache across sessions.",
+                  "mitigation": "Cache only static build assets; never add API responses to precache. No automated gate covers this, so it is verified manually on each Workbox config change.",
+                  "modelType": "STRIDE",
+                  "number": 6,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 700,
+              "y": 860
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "localStorage\n(session token)"
+              },
+              "topLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              },
+              "bottomLine": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "store",
+            "zIndex": 9,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "ec62489c-89b7-43b1-ab91-078de73873ec"
+                },
+                {
+                  "group": "right",
+                  "id": "b7f64859-65b9-42ff-aeee-8ecff64c3b70"
+                },
+                {
+                  "group": "bottom",
+                  "id": "5bf92455-9f85-4d82-afc4-1c00e475c3a9"
+                },
+                {
+                  "group": "left",
+                  "id": "e3f17983-2fc3-47b8-8965-2e2bfc004785"
+                }
+              ]
+            },
+            "id": "ab5093f3-0075-4ddb-8ac0-589d73b81ad2",
+            "data": {
+              "type": "tm.Store",
+              "name": "localStorage (session token)",
+              "description": "Browser storage holding the JWT issued by the API; written at three call sites in src/store/slices/authSlice.ts.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isALog": false,
+              "isEncrypted": false,
+              "isSigned": false,
+              "storesCredentials": true,
+              "storesInventory": false,
+              "threats": [
+                {
+                  "id": "173bfe0a-cb7a-40fd-bbde-c20f9a6c5bf9",
+                  "title": "Session token readable by any script on the origin",
+                  "status": "Accepted",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "The JWT is held in localStorage, which is readable by any script running on the origin. A single XSS flaw, in first-party code or any dependency, exfiltrates a full session.",
+                  "mitigation": "Risk formally accepted for this iteration. Rationale: the API issues bearer tokens; moving to an HttpOnly cookie is a cross-repo change touching login, authMiddleware, CORS credentials and every authenticated request path, with a real risk of breaking authentication. Compensating control: T2 keeps every HTML sink closed (no dangerouslySetInnerHTML or innerHTML in src/, blocked by the Code-stage ruleset). ESLint blocks any new credential write to browser storage; the three existing call sites in src/store/slices/authSlice.ts carry scoped, justified eslint-disable-next-line exceptions. Remediation path: HttpOnly, Secure, SameSite=Strict cookie issued by the API; remove all localStorage token access and the three exceptions. Review when auth is next modified.",
+                  "modelType": "STRIDE",
+                  "number": 1,
+                  "score": ""
+                }
+              ]
+            }
+          },
+          {
+            "position": {
+              "x": 370,
+              "y": 900
+            },
+            "size": {
+              "width": 100,
+              "height": 100
+            },
+            "attrs": {
+              "text": {
+                "text": "Stripe Elements"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 10,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "6c4b585c-4205-4851-947f-d51786c29659"
+                },
+                {
+                  "group": "right",
+                  "id": "77f51680-35f2-4180-a143-9b6d65f0ec2b"
+                },
+                {
+                  "group": "bottom",
+                  "id": "2075eebf-f55f-4235-b41a-803216237744"
+                },
+                {
+                  "group": "left",
+                  "id": "e9dffa4f-7f02-4587-995e-2983b5ec13e1"
+                }
+              ]
+            },
+            "id": "ecadf002-2ae9-455e-beb6-8299451f427e",
+            "data": {
+              "type": "tm.Process",
+              "name": "Stripe Elements",
+              "description": "Stripe-hosted iframe that collects card details.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": true,
+              "handlesGoodsOrServices": false,
+              "isWebApplication": false,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 1170,
+              "y": 380
+            },
+            "size": {
+              "width": 140,
+              "height": 140
+            },
+            "attrs": {
+              "text": {
+                "text": "ArtisanMarket API"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "process",
+            "zIndex": 11,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "2a2a81a5-79a6-4ce1-a189-75487de8ae2e"
+                },
+                {
+                  "group": "right",
+                  "id": "66c98904-3b23-4183-b721-70e13c259f40"
+                },
+                {
+                  "group": "bottom",
+                  "id": "fedc877a-e00f-4a58-8c39-7e54b023b8f2"
+                },
+                {
+                  "group": "left",
+                  "id": "5fdf3c03-b95c-484f-947a-14969a64fe3c"
+                }
+              ]
+            },
+            "id": "9b93a3db-38ad-4730-afa5-8c97c4d607f6",
+            "data": {
+              "type": "tm.Process",
+              "name": "ArtisanMarket API",
+              "description": "Backend API over HTTPS (VITE_API_URL) and Socket.IO (VITE_SOCKET_URL). Authorises every privileged action.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "handlesCardPayment": false,
+              "handlesGoodsOrServices": true,
+              "isWebApplication": true,
+              "privilegeLevel": "",
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 1110,
+              "y": 700
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "ImageKit"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 12,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "310ccbde-8881-499b-8526-cbc6e3efa743"
+                },
+                {
+                  "group": "right",
+                  "id": "a2822d99-25ad-461e-b0a8-f5ab3aeae517"
+                },
+                {
+                  "group": "bottom",
+                  "id": "27f508ec-5592-479c-a909-ac9caa1bfff2"
+                },
+                {
+                  "group": "left",
+                  "id": "4205acf3-1eef-4e51-990a-d2c093c57ace"
+                }
+              ]
+            },
+            "id": "804e1441-5b04-4db8-bddf-a0a2f941896a",
+            "data": {
+              "type": "tm.Actor",
+              "name": "ImageKit",
+              "description": "Image CDN, accessed with a public key.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "providesAuthentication": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 1110,
+              "y": 820
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Plaid Link"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 13,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "3a95462f-c6a7-4efd-926d-d68ae257ba6b"
+                },
+                {
+                  "group": "right",
+                  "id": "6e13c694-57fb-4e2a-9b1f-4305ae4bc50d"
+                },
+                {
+                  "group": "bottom",
+                  "id": "cf3b5d3f-754f-4bf6-8114-a83a97006cb5"
+                },
+                {
+                  "group": "left",
+                  "id": "fbbe31a6-c713-46a6-bbf9-da9a7a2319c0"
+                }
+              ]
+            },
+            "id": "30de8cc5-f011-4a7d-8b0a-7a900dadd98a",
+            "data": {
+              "type": "tm.Actor",
+              "name": "Plaid Link",
+              "description": "Bank account linking.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "providesAuthentication": false,
+              "threats": []
+            }
+          },
+          {
+            "position": {
+              "x": 1110,
+              "y": 950
+            },
+            "size": {
+              "width": 160,
+              "height": 80
+            },
+            "attrs": {
+              "text": {
+                "text": "Stripe API"
+              },
+              "body": {
+                "stroke": "#333333",
+                "strokeWidth": 1.5,
+                "strokeDasharray": null
+              }
+            },
+            "visible": true,
+            "shape": "actor",
+            "zIndex": 14,
+            "ports": {
+              "groups": {
+                "top": {
+                  "position": "top",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "position": "right",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "bottom": {
+                  "position": "bottom",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                },
+                "left": {
+                  "position": "left",
+                  "attrs": {
+                    "circle": {
+                      "r": 4,
+                      "magnet": true,
+                      "stroke": "#5F95FF",
+                      "strokeWidth": 1,
+                      "fill": "#fff",
+                      "style": {
+                        "visibility": "hidden"
+                      }
+                    }
+                  }
+                }
+              },
+              "items": [
+                {
+                  "group": "top",
+                  "id": "8a120e22-4fa4-45a1-a824-9b3e878395ef"
+                },
+                {
+                  "group": "right",
+                  "id": "1f619547-60b3-4521-aa5b-c930845b56a4"
+                },
+                {
+                  "group": "bottom",
+                  "id": "1bdbbee2-e7de-4c00-8028-8c338974f5d4"
+                },
+                {
+                  "group": "left",
+                  "id": "28ef0fe9-430f-4bdb-a4dc-308921a7bfb9"
+                }
+              ]
+            },
+            "id": "6b291af9-562a-4aff-8f26-ea364a123923",
+            "data": {
+              "type": "tm.Actor",
+              "name": "Stripe API",
+              "description": "Stripe payment processing (PCI DSS).",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "providesAuthentication": false,
+              "threats": []
+            }
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 15,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "packages",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "packages",
+              "description": "Third-party dependencies pulled into the build.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "7200a508-16ec-45e5-8010-99c1b780a4ad",
+                  "title": "Compromised or vulnerable dependency",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Tampering",
+                  "description": "The bundle inlines dependency code and ships it to every visitor, so a compromised or vulnerable package executes in the user's browser. A compromised build tool can affect the bundle even though it never ships.",
+                  "mitigation": "SCA gates on the full dependency tree, both blocking: npm audit on every branch, run through scripts/audit-gate.mjs, which allows a named advisory to be accepted only with a reason and a review date (.audit-allowlist.json); and a Trivy dependency scan at Build stage (staging and main). Snyk is wired in as an optional step but is not configured and does not run. Findings reduced from 36 (1 critical, 26 high, 7 moderate) to 2 moderates (react-router, react-router-dom) after upgrading to Vite 7. The earlier --omit=dev scoping has been reverted, because a compromised build tool can affect the bundle even though it never ships.",
+                  "modelType": "STRIDE",
+                  "number": 4,
+                  "score": ""
+                }
+              ],
+              "isTrustBoundary": false
+            },
+            "id": "8780f6d1-8ade-45de-a260-e63a488bb827",
+            "source": {
+              "cell": "0dfa1e35-06fb-4073-a678-c795045d196f"
+            },
+            "target": {
+              "cell": "c78dc8c4-f9d1-4f98-bf8e-0c7669e99021"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 16,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "inlined at build",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "inlined at build",
+              "description": "VITE_* values inlined into the bundle.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "29e333fa-664e-4ef8-b702-6f939f11dc35",
+            "source": {
+              "cell": "7b4cbfe4-b09b-4eb5-8cbe-995df87f1035"
+            },
+            "target": {
+              "cell": "c78dc8c4-f9d1-4f98-bf8e-0c7669e99021"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 17,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "image + manifests",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "image + manifests",
+              "description": "Container image and k8s manifests deployed to the static host.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "ac251c23-72a4-435e-a2f9-e8cdbdd39a24",
+            "source": {
+              "cell": "c78dc8c4-f9d1-4f98-bf8e-0c7669e99021"
+            },
+            "target": {
+              "cell": "f8ffd949-ead5-41d0-b3df-d03e632ab31d"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "red",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 18,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "bundle + headers",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "bundle + headers",
+              "description": "Static bundle and HTTP response headers delivered to the browser.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": true,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "335c7c80-3644-4813-b4e4-d446a2a20510",
+                  "title": "Missing security response headers",
+                  "status": "Open",
+                  "severity": "Medium",
+                  "type": "Tampering",
+                  "description": "Without CSP, X-Frame-Options and HSTS, the SPA is exposed to clickjacking and script injection that a header policy would blunt (Tampering / Information disclosure).",
+                  "mitigation": "Header policy is configured in nginx.conf inside the serving image. Not yet verified: the Staging DAST gate (OWASP ZAP baseline) scans vite preview on port 4173, which serves no headers. Pointing DAST at a container built from the production image would close this; until then the ZAP exceptions in .zap/rules.tsv remain.",
+                  "modelType": "STRIDE",
+                  "number": 5,
+                  "score": ""
+                }
+              ],
+              "isTrustBoundary": false
+            },
+            "id": "0830f642-4f9c-4b40-993c-0f06848d26a7",
+            "source": {
+              "cell": "f8ffd949-ead5-41d0-b3df-d03e632ab31d"
+            },
+            "target": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 19,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "browse, login, review",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "browse, login, review",
+              "description": "User interaction with the storefront.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "ce2a92e5-15fb-4eef-95da-71fcec108f25",
+            "source": {
+              "cell": "165babe7-4a4d-42cb-8b0c-85187b6b1687"
+            },
+            "target": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": "block"
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 20,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "app + server state",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "app + server state",
+              "description": "Application and server state.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": true,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "1e6e30f9-ca03-4575-96a1-65da1609688d",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "0581bea5-05f6-44fc-bbf2-62784728463a"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 21,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "static assets",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "static assets",
+              "description": "Precached static build assets.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "8e788106-9d72-44c2-80ce-dd8ee1a9a6c2",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "2873fb5b-c166-4f5b-ba1f-082508d7acbb"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 22,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "session token",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "session token",
+              "description": "JWT written to and read from localStorage.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": false,
+              "isPublicNetwork": false,
+              "protocol": "",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "110ca10c-7768-43ad-a322-dccecba74586",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "ab5093f3-0075-4ddb-8ac0-589d73b81ad2"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 23,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "API requests (Bearer JWT)",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "API requests (Bearer JWT)",
+              "description": "Authenticated REST and Socket.IO requests.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "96bebf68-29ef-4a34-a2ba-0464ba3dce36",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "9b93a3db-38ad-4730-afa5-8c97c4d607f6"
+            },
+            "vertices": [
+              {
+                "x": 900,
+                "y": 470
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 24,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "reviews, shops, products",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "reviews, shops, products",
+              "description": "Attacker-influenced content returned for rendering.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "2de82030-5652-4198-9412-06f2683e9ac2",
+            "source": {
+              "cell": "9b93a3db-38ad-4730-afa5-8c97c4d607f6"
+            },
+            "target": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "vertices": [
+              {
+                "x": 920,
+                "y": 620
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 25,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "image requests",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "image requests",
+              "description": "Image delivery via ImageKit.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "a29d799c-8582-46b8-bbd8-4be0e112c5b0",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "804e1441-5b04-4db8-bddf-a0a2f941896a"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 26,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "bank linking",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "bank linking",
+              "description": "Plaid Link flow.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "b70642c1-7c3c-45b7-8997-8d91b592c1b4",
+            "source": {
+              "cell": "841d5378-5e42-4fda-860e-048af699c1f5"
+            },
+            "target": {
+              "cell": "30de8cc5-f011-4a7d-8b0a-7a900dadd98a"
+            },
+            "vertices": []
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 27,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "card details",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "card details",
+              "description": "Card entry inside the Stripe-hosted iframe; never passes through the SPA or Redux store.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [
+                {
+                  "id": "f852882e-c2d1-4398-b2d7-5e42809ec3a6",
+                  "title": "Card data reaching ArtisanMarket systems",
+                  "status": "Mitigated",
+                  "severity": "High",
+                  "type": "Information disclosure",
+                  "description": "Card data must never reach ArtisanMarket servers or the Redux store (Repudiation / Information disclosure).",
+                  "mitigation": "Stripe Elements keeps card entry inside a Stripe-hosted iframe, holding the app in PCI DSS SAQ-A scope. Any move to raw card fields changes that materially.",
+                  "modelType": "STRIDE",
+                  "number": 7,
+                  "score": ""
+                }
+              ],
+              "isTrustBoundary": false
+            },
+            "id": "2ca61701-87ec-4e5f-9e53-b8865f4d6b26",
+            "source": {
+              "cell": "165babe7-4a4d-42cb-8b0c-85187b6b1687"
+            },
+            "target": {
+              "cell": "ecadf002-2ae9-455e-beb6-8299451f427e"
+            },
+            "vertices": [
+              {
+                "x": 120,
+                "y": 950
+              }
+            ]
+          },
+          {
+            "shape": "flow",
+            "attrs": {
+              "line": {
+                "stroke": "#333333",
+                "targetMarker": {
+                  "name": "block"
+                },
+                "sourceMarker": {
+                  "name": ""
+                },
+                "strokeDasharray": null
+              }
+            },
+            "width": 200,
+            "height": 100,
+            "zIndex": 28,
+            "labels": [
+              {
+                "markup": [
+                  {
+                    "tagName": "ellipse",
+                    "selector": "labelBody"
+                  },
+                  {
+                    "tagName": "text",
+                    "selector": "labelText"
+                  }
+                ],
+                "attrs": {
+                  "labelText": {
+                    "text": "card data",
+                    "textAnchor": "middle",
+                    "textVerticalAnchor": "middle"
+                  },
+                  "labelBody": {
+                    "ref": "labelText",
+                    "refRx": "50%",
+                    "refRy": "60%",
+                    "fill": "#fff",
+                    "strokeWidth": 0
+                  }
+                },
+                "position": {
+                  "distance": 0.5,
+                  "args": {
+                    "keepGradient": true,
+                    "ensureLegibility": true
+                  }
+                }
+              }
+            ],
+            "connector": "smooth",
+            "data": {
+              "type": "tm.Flow",
+              "name": "card data",
+              "description": "Card data sent directly to Stripe's origin.",
+              "outOfScope": false,
+              "reasonOutOfScope": "",
+              "hasOpenThreats": false,
+              "isBidirectional": false,
+              "isEncrypted": true,
+              "isPublicNetwork": true,
+              "protocol": "HTTPS",
+              "threats": [],
+              "isTrustBoundary": false
+            },
+            "id": "d4ffc7df-01a5-4e49-872a-f1cc09964e1e",
+            "source": {
+              "cell": "ecadf002-2ae9-455e-beb6-8299451f427e"
+            },
+            "target": {
+              "cell": "6b291af9-562a-4aff-8f26-ea364a123923"
+            },
+            "vertices": []
+          }
+        ]
+      }
+    ],
+    "diagramTop": 1,
+    "reviewer": "",
+    "threatTop": 9
+  }
+}

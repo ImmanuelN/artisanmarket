@@ -30,7 +30,7 @@ never `passed`. The script is byte-identical to the API's tested copy; it is
 
 | Stage | Control | Tool | PCI DSS v4.0.1 | GDPR |
 |---|---|---|---|---|
-| Plan | Threat model present | `docs/threat-model.md` | 6.2.1 | Art. 25(1) |
+| Plan | Threat model gate | OWASP Threat Dragon model, `docs/threat-model.json` | 6.2.1 | Art. 25(1) |
 | Code | Security lint ruleset | ESLint | 6.2.4 | Art. 25(1) |
 | Code | Security regression tests | Vitest | 6.2.4 | Art. 32(1)(d) |
 | Code | Secret scanning | Gitleaks | 8.6.2 | Art. 32(1)(b) |
