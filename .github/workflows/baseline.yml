@@ -1,0 +1,53 @@
+name: Baseline pipeline (no security)
+
+# Measurement control for the evaluation (Chapter 5, pipeline performance).
+#
+# This is the pipeline as it would be with the security model removed: install,
+# build and package — the steps any CI/CD pipeline runs — and nothing else. It
+# exists only so the cost of the security stages can be measured against it on
+# the same commit and the same GitHub-hosted runners. It reuses the exact action
+# versions, Node version, dependency cache and container build of pipeline.yml,
+# so the only difference between the two is the security work.
+#
+# It is triggered manually and never runs on push or pull request. It does not
+# deploy: the live site is deployed by Netlify on every push to main, and that
+# deploy is identical with or without the security stages, so it is measured
+# separately rather than repeated here.
+#
+#   build           install, build, container image
+#   build-and-test  the same, plus the unit and integration test suite
+
+run-name: "Baseline (${{ inputs.variant }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "build = install + build + container image; build-and-test adds the test suite"
+        type: choice
+        options: [build, build-and-test]
+        default: build
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    name: "Baseline · ${{ inputs.variant }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci --ignore-scripts
+
+      - name: Tests
+        if: inputs.variant == 'build-and-test'
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+      - name: Build container image
+        run: docker build -t artisanmarket-client:${{ github.sha }} .
