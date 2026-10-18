@@ -46,18 +46,23 @@ FROM nginx:1.31.6-alpine AS runtime
 # user on the host (CKV_K8S_40). The base image's `nginx` user is uid 101, well
 # inside the range a host assigns to system accounts.
 #
-# Two OS packages are upgraded explicitly. The base is pinned to a patch version
-# so the image that gets scanned is the image that gets deployed, which means a
-# newly published CVE in that layer has to be patched here rather than by
-# floating the tag:
+# Every OS package with a published fix is upgraded at build time. The base is
+# pinned to a patch version so its contents are known, which means CVEs fixed
+# upstream after that version do not arrive by themselves.
 #
-#   libexpat  2.8.4-r0 -> 2.8.5-r0   CVE-2026-93990, XML injection.
-#   pcre2     10.48-r0 -> 10.49-r0   CVE-2026-103111, out-of-bounds write via a
-#                                    crafted regular expression. nginx links
-#                                    pcre2 for regex location matching, so this
-#                                    reaches the client image; the API image
-#                                    carries no pcre2 and scanned clean.
-RUN apk add --no-cache --upgrade libexpat pcre2 \
+# This used to upgrade a named list of packages, one per CVE as Trivy found it:
+#
+#   libexpat  2.8.4-r0  -> 2.8.5-r0    CVE-2026-93990, XML injection
+#   pcre2     10.48-r0  -> 10.49-r0    CVE-2026-103111, out-of-bounds write
+#   libx11    1.8.13-r0 -> 1.8.14-r0   CVE-2026-88806, heap buffer overflow
+#   tiff      4.7.1-r0  -> 4.7.2-r0    CVE-2026-4775, arbitrary code execution
+#
+# Each one turned an unchanged commit red, and a named list only ever fixes what
+# has already been found. Upgrading everything that has a fix closes the class.
+# The image is built and scanned in the same Build job, so the scanned image is
+# still exactly the built image; Trivy remains the check that nothing unfixed
+# at CRITICAL or HIGH is left.
+RUN apk upgrade --no-cache \
     && addgroup -g 10001 -S app \
     && adduser -u 10001 -S app -G app
 
